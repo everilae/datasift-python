@@ -1,12 +1,11 @@
 username = 'my_username'
 api_key = 'my_api_key'
 
-definition = 'interaction.content contains "datasift"'
+definition = b'interaction.content contains "datasift"'
 definition_hash = '947b690ec9dca525fb8724645e088d79'
 
-unicode_definition = u'interaction.content contains "datasift"'
-
-invalid_definition = 'interactin.content contains "datasift"'
+unicode_definition = 'interaction.content contains "datasift"'
+invalid_definition = b'interactin.content contains "datasift"'
 
 historic_start_date = 1335869526
 historic_end_date   = 1335870126
@@ -25,9 +24,8 @@ push_name = 'mypush'
 push_status = 'active'
 push_output_type = 'http'
 push_output_params = {
-        'delivery_frequency': 10,
-        'url':                'http://www.example.com/push_endpoint',
-        'auth.type':          'basic',
-        'auth.username':      'frood',
-        'auth.password':      'towel42'
-    }
+    'delivery_frequency': 10,
+    'url':                'http://www.example.com/push_endpoint',
+    'auth.type':          'basic',
+    'auth.username':      'frood',
+    'auth.password':      'towel42'}

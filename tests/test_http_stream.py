@@ -1,8 +1,8 @@
 import datasift
-import httplib
-import mock
+import http.client
 import unittest
-import urllib2
+from unittest import mock
+import urllib.request, urllib.error, urllib.parse
 from datasift.streamconsumer_http import (StreamConsumer_HTTP,
     StreamConsumer_HTTP_Thread)
 
@@ -14,7 +14,7 @@ class TestHttpStreamErrors(unittest.TestCase):
 
     def _make_stream(self, broken_method=None, is_running=True,
                      auto_reconnect=True):
-        import testdata
+        from tests import testdata
         user = datasift.User('fake', 'user')
         client = datasift.mockapiclient.MockApiClient()
         response = {
@@ -58,31 +58,31 @@ class TestHttpStreamErrors(unittest.TestCase):
         self.addCleanup(mock_read_chunk_patcher.stop)
         return response
 
-    @mock.patch('urllib2.urlopen')
-    @mock.patch('urllib2.Request')
+    @mock.patch('urllib.request.urlopen')
+    @mock.patch('urllib.request.Request')
     def test_connect_exception(self, request, urlopen):
         self._setup_mocks(request, urlopen)
         sc = self._make_stream('on_connect', True)
         self._check(sc)
 
-    @mock.patch('urllib2.urlopen')
-    @mock.patch('urllib2.Request')
+    @mock.patch('urllib.request.urlopen')
+    @mock.patch('urllib.request.Request')
     def test_interaction_exception(self, request, urlopen):
         response = self._setup_mocks(request, urlopen)
         sc = self._make_stream('on_interaction', True)
         self.mock_read_chunk.return_value = '{"interaction": "json"}'
         self._check(sc)
 
-    @mock.patch('urllib2.urlopen')
-    @mock.patch('urllib2.Request')
+    @mock.patch('urllib.request.urlopen')
+    @mock.patch('urllib.request.Request')
     def test_deleted_exception(self, request, urlopen):
         response = self._setup_mocks(request, urlopen)
         sc = self._make_stream('on_deleted', True)
         self.mock_read_chunk.return_value = '{"interaction": "x", "deleted": "1"}'
         self._check(sc)
 
-    @mock.patch('urllib2.urlopen')
-    @mock.patch('urllib2.Request')
+    @mock.patch('urllib.request.urlopen')
+    @mock.patch('urllib.request.Request')
     def test_warning_exception(self, request, urlopen):
         response = self._setup_mocks(request, urlopen)
         sc = self._make_stream('on_warning', True)
@@ -92,8 +92,8 @@ class TestHttpStreamErrors(unittest.TestCase):
         self.mock_read_chunk.return_value = ('{"status": "warning", "message":'' "foo"}')
         self._check(sc)
 
-    @mock.patch('urllib2.urlopen')
-    @mock.patch('urllib2.Request')
+    @mock.patch('urllib.request.urlopen')
+    @mock.patch('urllib.request.Request')
     def test_error_exception(self, request, urlopen):
         response = self._setup_mocks(request, urlopen)
         sc = self._make_stream('on_error', True)
@@ -102,8 +102,8 @@ class TestHttpStreamErrors(unittest.TestCase):
         )
         self._check(sc)
 
-    @mock.patch('urllib2.urlopen')
-    @mock.patch('urllib2.Request')
+    @mock.patch('urllib.request.urlopen')
+    @mock.patch('urllib.request.Request')
     def test_disconnect_exception(self, request, urlopen):
         self._setup_mocks(request, urlopen)
         sc = self._make_stream('on_disconnect', False)

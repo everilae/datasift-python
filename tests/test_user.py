@@ -1,5 +1,8 @@
-import unittest, sys, os, json
-import testdata
+import unittest
+import sys
+import os
+import json
+from tests import testdata
 sys.path[0:0] = [os.path.join(os.path.dirname(__file__), ".."),]
 import datasift
 from datasift import mockapiclient
@@ -20,7 +23,7 @@ class TestUser(unittest.TestCase):
 
     def test_create_definition_empty(self):
         definition = self.user.create_definition()
-        self.assertEqual(definition.get(), '', 'Definition is not empty')
+        self.assertEqual(definition.get(), b'', 'Definition is not empty')
 
     def test_create_definition_unicode(self):
         definition = self.user.create_definition(testdata.unicode_definition)
@@ -78,7 +81,8 @@ class TestUser(unittest.TestCase):
             self.mock_api_client.set_response(response)
             usage = self.user.get_usage()
             self.fail('Expected APIError was not thrown')
-        except datasift.APIError as (e, c):
+        except datasift.APIError as xxx_todo_changeme:
+            (e, c) = xxx_todo_changeme.args
             self.assertEqual(response['data']['error'], e.__str__(), '400 exception message is not as expected')
 
         try:
@@ -108,7 +112,8 @@ class TestUser(unittest.TestCase):
             self.mock_api_client.set_response(response)
             usage = self.user.get_usage()
             self.fail('Expected APIError was not thrown')
-        except datasift.APIError as (e, c):
+        except datasift.APIError as xxx_todo_changeme1:
+            (e, c) = xxx_todo_changeme1.args
             self.assertEqual(response['data']['error'], e.__str__(), '404 exception message is not as expected')
 
         try:
@@ -123,7 +128,8 @@ class TestUser(unittest.TestCase):
             self.mock_api_client.set_response(response)
             usage = self.user.get_usage()
             self.fail('Expected APIError was not thrown')
-        except datasift.APIError as (e, c):
+        except datasift.APIError as xxx_todo_changeme2:
+            (e, c) = xxx_todo_changeme2.args
             self.assertEqual(response['data']['error'], e.__str__(), '500 exception message is not as expected')
 
 if __name__ == '__main__':

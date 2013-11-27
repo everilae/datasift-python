@@ -28,24 +28,33 @@ This software is Open Source. Read the license:
 https://github.com/datasift/datasift-python/blob/master/LICENSE
 """
 
-import sys, os, urllib, urllib2, json, thread, threading, types
+import sys
+import os
+import urllib.request
+import urllib.parse
+import urllib.error
+import json
+import _thread
+import threading
+import types
+import builtins
 from datetime import datetime
 
-__author__  = "Stuart Dallas <stuart@3ft9.com>"
-__status__  = "beta"
+__author__ = "Stuart Dallas <stuart@3ft9.com>"
+__status__ = "beta"
 __version__ = "0.5.7"
-__date__    = "28 June 2013"
+__date__ = "28 June 2013"
 
 #-----------------------------------------------------------------------------
 # Add this folder to the system path.
 #-----------------------------------------------------------------------------
-sys.path[0:0] = [os.path.dirname(__file__),]
+sys.path[0:0] = [os.path.dirname(__file__)]
 
 #-----------------------------------------------------------------------------
 # Module constants
 #-----------------------------------------------------------------------------
-USER_AGENT      = 'DataSiftPython/%s' % (__version__)
-API_BASE_URL    = 'api.datasift.com/'
+USER_AGENT = 'DataSiftPython/%s' % __version__
+API_BASE_URL = 'api.datasift.com/'
 
 #-----------------------------------------------------------------------------
 # Check for SSL support.
@@ -105,10 +114,9 @@ def _exists(name):
     Check whether the given name exists at the caller's local or global
     scope, or within the built-ins.
     """
-    return (name in sys._getframe(1).f_locals  # caller's locals
-         or name in sys._getframe(1).f_globals # caller's globals
-         or name in vars(__builtin__)          # built-in
-    )
+    return (name in sys._getframe(1).f_locals      # caller's locals
+            or name in sys._getframe(1).f_globals  # caller's globals
+            or name in vars(builtins))           # built-in
 
 #-----------------------------------------------------------------------------
 # The User class - all interactions with the API should start here.
@@ -231,7 +239,7 @@ class User(object):
         """
         Get the logs for all Push subscriptions or the given subscription.
         """
-        if subscription_id == False:
+        if subscription_id is False:
             return PushSubscription.get_logs(self)
         else:
             return self.get_push_subscription(subscription_id).get_log()
@@ -319,7 +327,7 @@ class Definition(object):
         """
         Get the definition's CSDL string.
         """
-        if self._csdl == False:
+        if self._csdl is False:
             raise InvalidDataError('CSDL not available')
         return self._csdl
 
@@ -327,13 +335,14 @@ class Definition(object):
         """
         Set the definition string.
         """
-        if csdl == False:
+        if csdl is False:
             self._csdl = False
+
         else:
-            if isinstance(csdl, unicode):
+            if isinstance(csdl, str):
                 csdl = csdl.encode('utf8')
-            elif not isinstance(csdl, str):
-                raise InvalidDataError('Definitions must be strings.')
+            elif not isinstance(csdl, bytes):
+                raise InvalidDataError('Definitions must be UTF-8 byte strings.')
 
             csdl = csdl.strip()
 
@@ -348,7 +357,7 @@ class Definition(object):
         Returns the hash for this definition. If the hash has not yet been
         obtained it compiles the definition first.
         """
-        if self._hash == False:
+        if self._hash is False:
             self.compile()
         return self._hash
 
@@ -358,7 +367,7 @@ class Definition(object):
         as requiring compilation. Also resets other variables that depend on
         the CSDL.
         """
-        if self._csdl == False:
+        if self._csdl is False:
             raise InvalidDataError('Cannot clear the hash of a hash-only definition object')
         self._hash = False
         self._created_at = False
@@ -369,9 +378,9 @@ class Definition(object):
         Returns the date when the stream was first created. If the created at
         date has not yet been obtained it validates the definition first.
         """
-        if self._csdl == False:
+        if self._csdl is False:
             raise InvalidDataError('Created at date not available')
-        if self._created_at == False:
+        if self._created_at is False:
             try:
                 self.validate()
             except InvalidDataError as e:
@@ -383,9 +392,9 @@ class Definition(object):
         Returns the total DPU of the stream. If the DPU has not yet been
         obtained it validates the definition first.
         """
-        if self._csdl == False:
+        if self._csdl is False:
             raise InvalidDataError('Total DPU not available')
-        if self._total_dpu == False:
+        if self._total_dpu is False:
             try:
                 self.validate()
             except InvalidDataError as e:
@@ -413,7 +422,8 @@ class Definition(object):
             if not 'dpu' in res:
                 raise CompileFailedError('Compiled successfully but no DPU in the response')
             self._total_dpu = res['dpu']
-        except APIError as (msg, code):
+        except APIError as e:
+            msg, code = e.args
             self.clear_hash()
 
             if code == 400:
@@ -438,8 +448,9 @@ class Definition(object):
             if not 'dpu' in res:
                 raise CompileFailedError('Validated successfully but no DPU in the response')
             self._total_dpu = res['dpu']
-        except APIError as (msg, code):
+        except APIError as e:
             self.clear_hash()
+            msg, code = e.args
 
             if code == 400:
                 raise CompileFailedError(msg)
@@ -466,9 +477,9 @@ class Definition(object):
             raise InvalidDataError('Cannot get buffered interactions for an empty definition')
 
         params = { 'hash': self.get_hash() }
-        if count != False:
+        if count is not False:
             params['count'] = count
-        if from_id != False:
+        if from_id is not False:
             params['interaction_id'] = from_id
 
         retval = self._user.call_api('stream', params)
@@ -682,7 +693,7 @@ class Historic:
         if self._deleted:
             raise InvalidDataError('Cannot set the name of a deleted Historics query')
 
-        if self._playback_id == False:
+        if self._playback_id is False:
             # Not prepared yet, just set it locally
             self._name = name
         else:
@@ -695,10 +706,11 @@ class Historic:
                         'name': self._name
                     })
                 self.reload_data()
-            except APIError as (e, c):
+            except APIError as e:
+                m, c = e.args
                 if c == 400:
                     # Missing or invalid parameters
-                    raise InvalidDataError(e)
+                    raise InvalidDataError(m)
                 else:
                     raise APIError('Unexpected APIError code: %d [%s]' % (c, e))
 
@@ -707,7 +719,7 @@ class Historic:
         Get the playback ID for this query. If the query has not yet been
         prepared this will be done automagically to get the hash.
         """
-        if self._playback_id == False:
+        if self._playback_id is False:
             self.prepare()
         return self._playback_id
 
@@ -722,7 +734,7 @@ class Historic:
         Get the DPU cost. If the query has not yet been prepared this will be
         done automagically to obtain the cost.
         """
-        if self._dpus == False:
+        if self._dpus is False:
             self.prepare()
         return self._dpus
 
@@ -731,7 +743,7 @@ class Historic:
         Get the data availability info. If the query has not yet been prepared
         this will be done automagically to obtain the availability data.
         """
-        if self._availability == False:
+        if self._availability is False:
             self.prepare()
         return self._availability
 
@@ -739,7 +751,7 @@ class Historic:
         if self._deleted:
             raise InvalidDataError('Cannot set the name of a deleted Historics query')
 
-        if self._playback_id == False:
+        if self._playback_id is False:
             raise InvalidDataError('Cannot reload the data for a Historics query that hasn\'t been prepared')
 
         try:
@@ -749,12 +761,13 @@ class Historic:
                     'id': self._playback_id
                 }))
 
-        except APIError as (e, c):
+        except APIError as e:
+            m, c = e.args
             if c == 400:
                 # Missing or invalid parameters
-                raise InvalidDataError(e)
+                raise InvalidDataError(m)
             else:
-                raise APIError('Unexpected APIError code: %d [%s]' % (c, e))
+                raise APIError('Unexpected APIError code: %d [%s]' % (c, m))
 
     def prepare(self):
         """
@@ -763,7 +776,7 @@ class Historic:
         if self._deleted:
             raise InvalidDataError('Cannot prepare a deleted Historics query')
 
-        if self._playback_id != False:
+        if self._playback_id is not False:
             raise InvalidDataError('This historic query has already been prepared')
 
         try:
@@ -789,12 +802,13 @@ class Historic:
             if not 'availability' in res:
                 raise APIError('Prepared successfully but no availability in the response', -1)
             self._availability = res['availability']
-        except APIError as (e, c):
+        except APIError as e:
+            m, c = e.args
             if c == 400:
                 # Missing or invalid parameters
-                raise InvalidDataError(e)
+                raise InvalidDataError(m)
             else:
-                raise APIError('Unexpected APIError code: %d [%s]' % (c, e))
+                raise APIError('Unexpected APIError code: %d [%s]' % (c, m))
 
     def start(self):
         """
@@ -803,7 +817,7 @@ class Historic:
         if self._deleted:
             raise InvalidDataError('Cannot start a deleted Historics query')
 
-        if self._playback_id == False or len(self._playback_id) == 0:
+        if self._playback_id is False or len(self._playback_id) == 0:
             raise InvalidDataError('Cannot start a historic query that hasn\'t been prepared')
 
         try:
@@ -812,15 +826,16 @@ class Historic:
                     {
                         'id': self._playback_id
                     })
-        except APIError as (e, c):
+        except APIError as e:
+            m, c = e.args
             if c == 400:
                 # Missing or invalid parameters
-                raise InvalidDataError(e)
+                raise InvalidDataError(m)
             elif c == 404:
                 # Historic query not found
-                raise InvalidDataError(e)
+                raise InvalidDataError(m)
             else:
-                raise APIError('Unexpected APIError code: %d [%s]' % (c, e))
+                raise APIError('Unexpected APIError code: %d [%s]' % (c, m))
 
     def stop(self):
         """
@@ -829,7 +844,7 @@ class Historic:
         if self._deleted:
             raise InvalidDataError('Cannot stop a deleted Historics query')
 
-        if self._playback_id == False or len(self._playback_id) == 0:
+        if self._playback_id is False or len(self._playback_id) == 0:
             raise InvalidDataError('Cannot stop a historic query that hasn\'t been prepared')
 
         try:
@@ -838,7 +853,9 @@ class Historic:
                     {
                         'id': self._playback_id
                     })
-        except APIError as (e, c):
+        except APIError as e:
+            e, c = e.args
+
             if c == 400:
                 # Missing or invalid parameters
                 raise InvalidDataError(e)
@@ -855,7 +872,7 @@ class Historic:
         if self._deleted:
             raise InvalidDataError('This Historics query has already been deleted')
 
-        if self._playback_id == False or len(self._playback_id) == 0:
+        if self._playback_id is False or len(self._playback_id) == 0:
             raise InvalidDataError('Cannot delete a historic query that hasn\'t been prepared')
 
         try:
@@ -865,7 +882,9 @@ class Historic:
                         'id': self._playback_id
                     })
             self._deleted = True
-        except APIError as (e, c):
+        except APIError as e:
+            e, c = e.args
+
             if c == 400:
                 # Missing or invalid parameters
                 raise InvalidDataError(e)
@@ -1031,10 +1050,10 @@ class PushSubscription(PushDefinition):
         """
         Get a push subscription by ID.
         """
-        return PushSubscription(user, user.call_api('push/get', { 'id': id }))
+        return PushSubscription(user, user.call_api('push/get', {'id': id}))
 
     @staticmethod
-    def list(user, page = 1, per_page = 20, order_by = False, order_dir = False, include_finished = False, hash_type = False, hash = False):
+    def list(user, page=1, per_page=20, order_by=False, order_dir=False, include_finished=False, hash_type=False, hash=False):
         """
         Get a page of push subscriptions in the given user's account, where
         each page contains up to per_page items. Results will be ordered
@@ -1044,9 +1063,9 @@ class PushSubscription(PushDefinition):
             raise InvalidDataError('The specified page number is invalid')
         if per_page < 1:
             raise InvalidDataError('The specified per_page value is invalid')
-        if order_by == False:
+        if order_by is False:
             order_by = PushSubscription.ORDERBY_CREATED_AT
-        if order_dir == False:
+        if order_dir is False:
             order_dir = PushSubscription.ORDERDIR_ASC
 
         params = {
@@ -1056,7 +1075,7 @@ class PushSubscription(PushDefinition):
             'order_dir': order_dir
         }
 
-        if hash_type != False and hash != False:
+        if hash_type is not False and hash is not False:
             params[hash_type] = hash
 
         if include_finished == 1:
@@ -1066,32 +1085,32 @@ class PushSubscription(PushDefinition):
 
         retval = {
             'count': res['count'],
-            'subscriptions': []
-        }
+            'subscriptions': []}
+
         for subscription in res['subscriptions']:
             retval['subscriptions'].append(PushSubscription(user, subscription))
 
         return retval
 
-    @staticmethod
-    def list_by_stream_hash(user, hash, page = 1, per_page = 20, order_by = False, order_dir = False):
+    @classmethod
+    def list_by_stream_hash(cls, user, hash, page = 1, per_page = 20, order_by = False, order_dir = False):
         """
         Get a page of push subscriptions in the given user's account
         subscribed to the given stream hash, where each page contains up to
         per_page items. Results will be ordered according to the supplied
         ordering parameters.
         """
-        return __class__.list(user, page, per_page, order_by, order_dir, False, 'hash', hash)
+        return cls.list(user, page, per_page, order_by, order_dir, False, 'hash', hash)
 
-    @staticmethod
-    def list_by_playback_id(user, playback_id, page = 1, per_page = 20, order_by = False, order_dir = False):
+    @classmethod
+    def list_by_playback_id(cls, user, playback_id, page=1, per_page=20, order_by=False, order_dir=False):
         """
         Get a page of push subscriptions in the given user's account
         subscribed to the given playback ID, where each page contains up to
         per_page items. Results will be ordered according to the supplied
         ordering parameters.
         """
-        return __class__.list(user, page, per_page, order_by, order_dir, False, 'playback_id', playback_id)
+        return cls.list(user, page, per_page, order_by, order_dir, False, 'playback_id', playback_id)
 
     @staticmethod
     def get_logs(user, page = 1, per_page = 20, order_by = False, order_dir = False, id = False):
@@ -1103,9 +1122,9 @@ class PushSubscription(PushDefinition):
             raise InvalidDataError('The specified page number is invalid')
         if per_page < 1:
             raise InvalidDataError('The specified per_page value is invalid')
-        if order_by == False:
+        if order_by is False:
             order_by = PushSubscription.ORDERBY_REQUEST_TIME
-        if order_dir == False:
+        if order_dir is False:
             order_dir = PushSubscription.ORDERDIR_DESC
 
         params = {
@@ -1115,7 +1134,7 @@ class PushSubscription(PushDefinition):
             'order_dir': order_dir
         }
 
-        if id != False:
+        if id is not False:
             params['id'] = id
 
         return user.call_api('push/log', params)
@@ -1319,13 +1338,13 @@ class ApiClient(object):
             'Auth': '%s:%s' % (username, api_key),
             'User-Agent': user_agent,
         }
-        req = urllib2.Request(url, urllib.urlencode(params), headers)
+        req = urllib.request.Request(url, urllib.parse.urlencode(params), headers)
 
         try:
-            resp = urllib2.urlopen(req, None, 10)
-        except urllib2.HTTPError as resp:
+            resp = urllib.request.urlopen(req, None, 10)
+        except urllib.error.HTTPError as resp:
             pass
-        except urllib2.URLError as err:
+        except urllib.error.URLError as err:
             raise APIError('Request failed: %s' % err, 503)
 
         # Handle a response with no data
@@ -1335,14 +1354,13 @@ class ApiClient(object):
         else:
             data = json.loads(content)
             if not data:
-                raise APIError('Failed to decode the response', retval['response_code'])
+                raise APIError('Failed to decode the response', resp.getcode())
 
         retval = {
             'response_code': resp.getcode(),
             'data': data,
             'rate_limit': resp.headers.getheader('x-ratelimit-limit'),
-            'rate_limit_remaining': resp.headers.getheader('x-ratelimit-remaining'),
-        }
+            'rate_limit_remaining': resp.headers.getheader('x-ratelimit-remaining'),}
 
         return retval
 
@@ -1420,7 +1438,7 @@ class StreamConsumer(object):
             raise InvalidDataError('Please supply a valid User object when creating a StreamConsumer object')
         self._user = user
 
-        if isinstance(definition, types.StringTypes):
+        if isinstance(definition, str):
             self._hashes = self._user.create_definition(definition).get_hash()
         elif isinstance(definition, Definition):
             self._hashes = definition.get_hash()

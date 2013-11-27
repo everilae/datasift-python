@@ -1,6 +1,6 @@
 import unittest, sys, os, json
 from datetime import datetime
-import testdata
+from tests import testdata
 sys.path[0:0] = [os.path.join(os.path.dirname(__file__), ".."),]
 import datasift
 
@@ -73,7 +73,8 @@ class TestPush(unittest.TestCase):
             self.pushdef.validate()
         except datasift.InvalidDataError as e:
             self.fail('InvalidDataError: %s' % e)
-        except datasift.APIError as (e, c):
+        except datasift.APIError as xxx_todo_changeme:
+            (e, c) = xxx_todo_changeme.args
             if c == 400:
                 self.assertEqual(e, response['data']['error'], 'The failure error is incorrect')
             else:

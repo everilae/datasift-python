@@ -14,7 +14,6 @@ setup(
     license = "Copyright (C) 2012 by MediaSift Ltd. All Rights Reserved. See LICENSE for the full license.",
     url = "https://github.com/datasift/datasift-python",
     packages=['datasift', 'tests'],
-    tests_require=['mock>=0.8.0'],
     include_package_data = True,
     platforms='any',
     classifiers=[

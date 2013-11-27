@@ -2,7 +2,7 @@
 from threading import Thread
 from time import sleep
 import socket, select, re, platform
-from urlparse import urlparse
+from urllib.parse import urlparse
 from datasift import *
 
 """
@@ -110,13 +110,13 @@ class StreamConsumer_HTTP_Thread(Thread):
                     'Auth': '%s' % self._consumer._get_auth_header(),
                     'User-Agent': self._consumer._get_user_agent(),
                 }
-                req = urllib2.Request(self._consumer._get_url(), None, headers)
+                req = urllib.request.Request(self._consumer._get_url(), None, headers)
 
                 try:
-                    resp = urllib2.urlopen(req, None, 30)
-                except urllib2.HTTPError as resp:
+                    resp = urllib.request.urlopen(req, None, 30)
+                except urllib.error.HTTPError as resp:
                     pass
-                except urllib2.URLError as err:
+                except urllib.error.URLError as err:
                     self._consumer._on_error('Connection failed: %s' % err)
                     break
 
@@ -181,7 +181,7 @@ class StreamConsumer_HTTP_Thread(Thread):
                     break
                 else:
                     raise ExponentialBackoffError('Received %s response' % resp_code)
-            except ExponentialBackoffError, e:
+            except ExponentialBackoffError as e:
                 if connection_delay == 0:
                     connection_delay = 10
                 elif connection_delay < 320:
@@ -190,14 +190,14 @@ class StreamConsumer_HTTP_Thread(Thread):
                     self._consumer._on_error('%s, no more retries' % str(e))
                     break
                 self._consumer._on_warning('%s, retrying in %s seconds' % (str(e), connection_delay))
-            except LinearBackoffError, e:
+            except LinearBackoffError as e:
                 if connection_delay < 16:
                     connection_delay += 1
                     self._consumer._on_warning('Connection failed (%s), retrying in %s seconds' % (str(e), connection_delay))
                 else:
                     self._consumer._on_error('Connection failed (%s), no more retries' % (str(e)))
                     break
-            except ImmediateReconnect, e:
+            except ImmediateReconnect as e:
                 connection_delay = 0
                 self._consumer._on_warning('No data received for over a minute, reconnecting immediately')
         self._consumer._on_disconnect()
@@ -216,7 +216,7 @@ class StreamConsumer_HTTP_Thread(Thread):
                 if len(data) > 0:
                     # Strip carriage returns to make splitting lines easier
                     self._buffer += data.replace('\r', '')
-            except (socket.error, ssl.SSLError), e:
+            except (socket.error, ssl.SSLError) as e:
                 raise LinearBackoffError(str(e))
             except socket.timeout:
                 # socket timeout

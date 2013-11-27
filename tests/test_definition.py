@@ -1,6 +1,6 @@
 import unittest, sys, os, json
 from datetime import datetime
-import testdata
+from tests import testdata
 sys.path[0:0] = [os.path.join(os.path.dirname(__file__), ".."),]
 import datasift
 
@@ -16,7 +16,7 @@ class TestDefinition(unittest.TestCase):
 
     def test_construction(self):
         definition = datasift.Definition(self.user)
-        self.assertEqual(definition.get(), '', 'Default definition CSDL is not empty')
+        self.assertEqual(definition.get(), b'', 'Default definition CSDL is not empty')
 
     def test_construction_with_definition(self):
         definition = datasift.Definition(self.user, testdata.definition)
@@ -40,7 +40,7 @@ class TestDefinition(unittest.TestCase):
 
     def test_set_and_get(self):
         definition = datasift.Definition(self.user)
-        self.assertEqual(definition.get(), '', 'Default definition CSDL is not empty')
+        self.assertEqual(definition.get(), b'', 'Default definition CSDL is not empty')
         definition.set(testdata.definition)
         self.assertEqual(definition.get(), testdata.definition, 'Definition CSDL not set correctly')
 
@@ -66,7 +66,8 @@ class TestDefinition(unittest.TestCase):
             self.fail('InvalidDataError: %s' % e)
         except datasift.CompileFailedError as e:
             self.fail('CompileFailedError: %s' % e)
-        except datasift.APIError as (e, c):
+        except datasift.APIError as xxx_todo_changeme:
+            (e, c) = xxx_todo_changeme.args
             self.fail('APIError: %s' % e)
 
         self.assertEqual(self.user.get_rate_limit(), response['rate_limit'], 'Incorrect rate limit')
@@ -96,7 +97,8 @@ class TestDefinition(unittest.TestCase):
             self.fail('InvalidDataError: %s' % e)
         except datasift.CompileFailedError as e:
             self.assertEqual(e.__str__(), response['data']['error'])
-        except datasift.APIError as (e, c):
+        except datasift.APIError as xxx_todo_changeme1:
+            (e, c) = xxx_todo_changeme1.args
             self.fail('APIError: %s' % e)
 
     def test_compile_success_then_failure(self):
@@ -121,7 +123,8 @@ class TestDefinition(unittest.TestCase):
             self.fail('InvalidDataError: %s' % e)
         except datasift.CompileFailedError as e:
             self.fail('CompileFailedError: %s' % e)
-        except datasift.APIError as (e, c):
+        except datasift.APIError as xxx_todo_changeme2:
+            (e, c) = xxx_todo_changeme2.args
             self.fail('APIError: %s' % e)
 
         self.assertEqual(self.user.get_rate_limit(), response['rate_limit'], 'Incorrect rate limit')
@@ -150,7 +153,8 @@ class TestDefinition(unittest.TestCase):
             self.fail('InvalidDataError: %s' % e)
         except datasift.CompileFailedError as e:
             self.assertEqual(e.__str__(), response['data']['error'])
-        except datasift.APIError as (e, c):
+        except datasift.APIError as xxx_todo_changeme3:
+            (e, c) = xxx_todo_changeme3.args
             self.fail('APIError: %s' % e)
 
     def test_get_created_at(self):
@@ -253,7 +257,8 @@ class TestDefinition(unittest.TestCase):
             self.fail('InvalidDataError: %s' % e)
         except datasift.CompileFailedError as e:
             self.assertEqual(e.__str__(), response['data']['error'])
-        except datasift.APIError as (e, c):
+        except datasift.APIError as xxx_todo_changeme4:
+            (e, c) = xxx_todo_changeme4.args
             self.fail('APIError: %s' % e)
 
     def test_get_buffered(self):
