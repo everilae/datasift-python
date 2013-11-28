@@ -1,8 +1,5 @@
 import unittest
-import sys
-import os
-from datasift.tests import testdata
-sys.path[0:0] = [os.path.join(os.path.dirname(__file__), ".."),]
+from datasift.tests import data
 import datasift
 
 class TestPush(unittest.TestCase):
@@ -11,7 +8,7 @@ class TestPush(unittest.TestCase):
     mock_api_client = None
 
     def setUp(self):
-        self.user = datasift.User(testdata.username, testdata.api_key)
+        self.user = datasift.User(data.username, data.api_key)
         self.mock_api_client = datasift.mockapiclient.MockApiClient()
         self.user.set_api_client(self.mock_api_client)
         self.pushdef = datasift.PushDefinition(self.user)
@@ -24,7 +21,7 @@ class TestPush(unittest.TestCase):
 
     def test_initial_status(self):
         self.assertEqual(self.pushdef.get_initial_status(), '', 'Default initial status is not empty')
-        self.pushdef.set_initial_status(testdata.push_status)
+        self.pushdef.set_initial_status(data.push_status)
         self.assertEqual(self.pushdef.get_initial_status(), datasift.PushSubscription.STATUS_ACTIVE, 'Initial status not set to the new value')
 
     def test_output_type(self):
@@ -34,10 +31,10 @@ class TestPush(unittest.TestCase):
 
     def test_output_params(self):
         self.assertEqual(self.pushdef.get_output_params(), {}, 'Default output params is not empty')
-        for key in testdata.push_output_params:
-            self.pushdef.set_output_param(key, testdata.push_output_params[key])
-        for key in testdata.push_output_params:
-            self.assertEqual(self.pushdef.get_output_param(key), testdata.push_output_params[key], 'Output param %s is incorrect' % key)
+        for key in data.push_output_params:
+            self.pushdef.set_output_param(key, data.push_output_params[key])
+        for key in data.push_output_params:
+            self.assertEqual(self.pushdef.get_output_param(key), data.push_output_params[key], 'Output param %s is incorrect' % key)
 
     def test_validate_success(self):
         self._populate_pushdef()
@@ -82,11 +79,11 @@ class TestPush(unittest.TestCase):
                 self.fail('APIError: [%d] %s' % (c, e))
 
     def test_subscribe_definition(self):
-        definition = datasift.Definition(self.user, testdata.definition)
+        definition = datasift.Definition(self.user, data.definition)
         response = {
             'response_code': 200,
             'data': {
-                'hash':       testdata.definition_hash,
+                'hash':       data.definition_hash,
                 'created_at': '2011-12-13 14:15:16',
                 'dpu':        10,
             },
@@ -94,27 +91,27 @@ class TestPush(unittest.TestCase):
             'rate_limit_remaining': 150,
         }
         self.mock_api_client.set_response(response)
-        self.assertEqual(definition.get_hash(), testdata.definition_hash, 'Definition hash not set correctly')
+        self.assertEqual(definition.get_hash(), data.definition_hash, 'Definition hash not set correctly')
 
         self._populate_pushdef()
 
         response = {
             'response_code': 200,
             'data': {
-                'id': testdata.push_id,
-                'name': testdata.push_name,
-                'created_at': testdata.push_created_at,
-                'status': testdata.push_status,
-                'hash': testdata.push_hash,
-                'hash_type': testdata.push_hash_stream_type,
-                'output_type': testdata.push_output_type,
+                'id': data.push_id,
+                'name': data.push_name,
+                'created_at': data.push_created_at,
+                'status': data.push_status,
+                'hash': data.push_hash,
+                'hash_type': data.push_hash_stream_type,
+                'output_type': data.push_output_type,
                 'output_params': {
-                    'output_params.delivery_frequency': testdata.push_output_params['delivery_frequency'],
-                    'output_params.url': testdata.push_output_params['url'],
+                    'output_params.delivery_frequency': data.push_output_params['delivery_frequency'],
+                    'output_params.url': data.push_output_params['url'],
                     'output_params.auth': {
-                        'type': testdata.push_output_params['auth.type'],
-                        'username': testdata.push_output_params['auth.username'],
-                        'password': testdata.push_output_params['auth.password'],
+                        'type': data.push_output_params['auth.type'],
+                        'username': data.push_output_params['auth.username'],
+                        'password': data.push_output_params['auth.password'],
                     },
                 },
                 'last_request': None,
@@ -125,20 +122,20 @@ class TestPush(unittest.TestCase):
         }
         self.mock_api_client.set_response(response)
 
-        pushsub = self.pushdef.subscribe_definition(definition, testdata.push_name)
+        pushsub = self.pushdef.subscribe_definition(definition, data.push_name)
 
-        self.assertEqual(pushsub.get_id(), testdata.push_id, 'The subscription ID is incorrect')
-        self.assertEqual(pushsub.get_name(), testdata.push_name, 'The subscription name is incorrect')
-        self.assertEqual(pushsub.get_created_at(), testdata.push_created_at, 'The subscription created_at is incorrect')
-        self.assertEqual(pushsub.get_status(), testdata.push_status, 'The subscription status is incorrect')
-        self.assertEqual(pushsub.get_output_type(), testdata.push_output_type, 'The subscription output_type is incorrect')
-        self.assertEqual(pushsub.get_hash_type(), testdata.push_hash_stream_type, 'The subscription hash_type is incorrect')
-        self.assertEqual(pushsub.get_hash(), testdata.push_hash, 'The subscription hash is incorrect')
-        self.assertEqual(pushsub.get_output_param('delivery_frequency'), testdata.push_output_params['delivery_frequency'], 'The subscription delivery_frequency is incorrect')
-        self.assertEqual(pushsub.get_output_param('url'), testdata.push_output_params['url'], 'The subscription url is incorrect')
-        self.assertEqual(pushsub.get_output_param('auth.type'), testdata.push_output_params['auth.type'], 'The subscription auth.type is incorrect')
-        self.assertEqual(pushsub.get_output_param('auth.username'), testdata.push_output_params['auth.username'], 'The subscription auth.username is incorrect')
-        self.assertEqual(pushsub.get_output_param('auth.password'), testdata.push_output_params['auth.password'], 'The subscription auth.password is incorrect')
+        self.assertEqual(pushsub.get_id(), data.push_id, 'The subscription ID is incorrect')
+        self.assertEqual(pushsub.get_name(), data.push_name, 'The subscription name is incorrect')
+        self.assertEqual(pushsub.get_created_at(), data.push_created_at, 'The subscription created_at is incorrect')
+        self.assertEqual(pushsub.get_status(), data.push_status, 'The subscription status is incorrect')
+        self.assertEqual(pushsub.get_output_type(), data.push_output_type, 'The subscription output_type is incorrect')
+        self.assertEqual(pushsub.get_hash_type(), data.push_hash_stream_type, 'The subscription hash_type is incorrect')
+        self.assertEqual(pushsub.get_hash(), data.push_hash, 'The subscription hash is incorrect')
+        self.assertEqual(pushsub.get_output_param('delivery_frequency'), data.push_output_params['delivery_frequency'], 'The subscription delivery_frequency is incorrect')
+        self.assertEqual(pushsub.get_output_param('url'), data.push_output_params['url'], 'The subscription url is incorrect')
+        self.assertEqual(pushsub.get_output_param('auth.type'), data.push_output_params['auth.type'], 'The subscription auth.type is incorrect')
+        self.assertEqual(pushsub.get_output_param('auth.username'), data.push_output_params['auth.username'], 'The subscription auth.username is incorrect')
+        self.assertEqual(pushsub.get_output_param('auth.password'), data.push_output_params['auth.password'], 'The subscription auth.password is incorrect')
 
     def test_subscribe_stream_hash(self):
         self._populate_pushdef()
@@ -146,20 +143,20 @@ class TestPush(unittest.TestCase):
         response = {
             'response_code': 200,
             'data': {
-                'id': testdata.push_id,
-                'name': testdata.push_name,
-                'created_at': testdata.push_created_at,
-                'status': testdata.push_status,
-                'hash': testdata.push_hash,
-                'hash_type': testdata.push_hash_stream_type,
-                'output_type': testdata.push_output_type,
+                'id': data.push_id,
+                'name': data.push_name,
+                'created_at': data.push_created_at,
+                'status': data.push_status,
+                'hash': data.push_hash,
+                'hash_type': data.push_hash_stream_type,
+                'output_type': data.push_output_type,
                 'output_params': {
-                    'output_params.delivery_frequency': testdata.push_output_params['delivery_frequency'],
-                    'output_params.url': testdata.push_output_params['url'],
+                    'output_params.delivery_frequency': data.push_output_params['delivery_frequency'],
+                    'output_params.url': data.push_output_params['url'],
                     'output_params.auth': {
-                        'type': testdata.push_output_params['auth.type'],
-                        'username': testdata.push_output_params['auth.username'],
-                        'password': testdata.push_output_params['auth.password'],
+                        'type': data.push_output_params['auth.type'],
+                        'username': data.push_output_params['auth.username'],
+                        'password': data.push_output_params['auth.password'],
                     },
                 },
                 'last_request': None,
@@ -170,27 +167,27 @@ class TestPush(unittest.TestCase):
         }
         self.mock_api_client.set_response(response)
 
-        pushsub = self.pushdef.subscribe_stream_hash(testdata.push_hash, testdata.push_name)
+        pushsub = self.pushdef.subscribe_stream_hash(data.push_hash, data.push_name)
 
-        self.assertEqual(pushsub.get_id(), testdata.push_id, 'The subscription ID is incorrect')
-        self.assertEqual(pushsub.get_name(), testdata.push_name, 'The subscription name is incorrect')
-        self.assertEqual(pushsub.get_created_at(), testdata.push_created_at, 'The subscription created_at is incorrect')
-        self.assertEqual(pushsub.get_status(), testdata.push_status, 'The subscription status is incorrect')
-        self.assertEqual(pushsub.get_output_type(), testdata.push_output_type, 'The subscription output_type is incorrect')
-        self.assertEqual(pushsub.get_hash_type(), testdata.push_hash_stream_type, 'The subscription hash_type is incorrect')
-        self.assertEqual(pushsub.get_hash(), testdata.push_hash, 'The subscription hash is incorrect')
-        self.assertEqual(pushsub.get_output_param('delivery_frequency'), testdata.push_output_params['delivery_frequency'], 'The subscription delivery_frequency is incorrect')
-        self.assertEqual(pushsub.get_output_param('url'), testdata.push_output_params['url'], 'The subscription url is incorrect')
-        self.assertEqual(pushsub.get_output_param('auth.type'), testdata.push_output_params['auth.type'], 'The subscription auth.type is incorrect')
-        self.assertEqual(pushsub.get_output_param('auth.username'), testdata.push_output_params['auth.username'], 'The subscription auth.username is incorrect')
-        self.assertEqual(pushsub.get_output_param('auth.password'), testdata.push_output_params['auth.password'], 'The subscription auth.password is incorrect')
+        self.assertEqual(pushsub.get_id(), data.push_id, 'The subscription ID is incorrect')
+        self.assertEqual(pushsub.get_name(), data.push_name, 'The subscription name is incorrect')
+        self.assertEqual(pushsub.get_created_at(), data.push_created_at, 'The subscription created_at is incorrect')
+        self.assertEqual(pushsub.get_status(), data.push_status, 'The subscription status is incorrect')
+        self.assertEqual(pushsub.get_output_type(), data.push_output_type, 'The subscription output_type is incorrect')
+        self.assertEqual(pushsub.get_hash_type(), data.push_hash_stream_type, 'The subscription hash_type is incorrect')
+        self.assertEqual(pushsub.get_hash(), data.push_hash, 'The subscription hash is incorrect')
+        self.assertEqual(pushsub.get_output_param('delivery_frequency'), data.push_output_params['delivery_frequency'], 'The subscription delivery_frequency is incorrect')
+        self.assertEqual(pushsub.get_output_param('url'), data.push_output_params['url'], 'The subscription url is incorrect')
+        self.assertEqual(pushsub.get_output_param('auth.type'), data.push_output_params['auth.type'], 'The subscription auth.type is incorrect')
+        self.assertEqual(pushsub.get_output_param('auth.username'), data.push_output_params['auth.username'], 'The subscription auth.username is incorrect')
+        self.assertEqual(pushsub.get_output_param('auth.password'), data.push_output_params['auth.password'], 'The subscription auth.password is incorrect')
 
     def test_subscribe_historic(self):
-        definition = datasift.Definition(self.user, testdata.definition)
+        definition = datasift.Definition(self.user, data.definition)
         response = {
             'response_code': 200,
             'data': {
-                'hash':       testdata.definition_hash,
+                'hash':       data.definition_hash,
                 'created_at': '2011-12-13 14:15:16',
                 'dpu':        10,
             },
@@ -198,13 +195,13 @@ class TestPush(unittest.TestCase):
             'rate_limit_remaining': 150,
         }
         self.mock_api_client.set_response(response)
-        self.assertEqual(definition.get_hash(), testdata.definition_hash, 'Definition hash not set correctly')
+        self.assertEqual(definition.get_hash(), data.definition_hash, 'Definition hash not set correctly')
 
         response = {
             'response_code': 200,
             'data': {
-                'dpus': testdata.historic_dpus,
-                'id': testdata.historic_id,
+                'dpus': data.historic_dpus,
+                'id': data.historic_id,
                 'availability': {
                     'start': 12345678,
                     'end': 124356376,
@@ -232,28 +229,28 @@ class TestPush(unittest.TestCase):
         }
         self.mock_api_client.set_response(response)
 
-        historic = definition.create_historic(testdata.historic_start_date, testdata.historic_end_date, testdata.historic_sources, testdata.historic_sample, testdata.historic_name)
-        self.assertEqual(historic.get_hash(), testdata.historic_id, 'The historic playback ID is incorrect')
+        historic = definition.create_historic(data.historic_start_date, data.historic_end_date, data.historic_sources, data.historic_sample, data.historic_name)
+        self.assertEqual(historic.get_hash(), data.historic_id, 'The historic playback ID is incorrect')
 
         self._populate_pushdef()
 
         response = {
             'response_code': 200,
             'data': {
-                'id': testdata.push_id,
-                'name': testdata.push_name,
-                'created_at': testdata.push_created_at,
-                'status': testdata.push_status,
-                'hash': testdata.historic_id,
-                'hash_type': testdata.push_hash_historic_type,
-                'output_type': testdata.push_output_type,
+                'id': data.push_id,
+                'name': data.push_name,
+                'created_at': data.push_created_at,
+                'status': data.push_status,
+                'hash': data.historic_id,
+                'hash_type': data.push_hash_historic_type,
+                'output_type': data.push_output_type,
                 'output_params': {
-                    'output_params.delivery_frequency': testdata.push_output_params['delivery_frequency'],
-                    'output_params.url': testdata.push_output_params['url'],
+                    'output_params.delivery_frequency': data.push_output_params['delivery_frequency'],
+                    'output_params.url': data.push_output_params['url'],
                     'output_params.auth': {
-                        'type': testdata.push_output_params['auth.type'],
-                        'username': testdata.push_output_params['auth.username'],
-                        'password': testdata.push_output_params['auth.password'],
+                        'type': data.push_output_params['auth.type'],
+                        'username': data.push_output_params['auth.username'],
+                        'password': data.push_output_params['auth.password'],
                     },
                 },
                 'last_request': None,
@@ -264,20 +261,20 @@ class TestPush(unittest.TestCase):
         }
         self.mock_api_client.set_response(response)
 
-        pushsub = self.pushdef.subscribe_definition(definition, testdata.push_name)
+        pushsub = self.pushdef.subscribe_definition(definition, data.push_name)
 
-        self.assertEqual(pushsub.get_id(), testdata.push_id, 'The subscription ID is incorrect')
-        self.assertEqual(pushsub.get_name(), testdata.push_name, 'The subscription name is incorrect')
-        self.assertEqual(pushsub.get_created_at(), testdata.push_created_at, 'The subscription created_at is incorrect')
-        self.assertEqual(pushsub.get_status(), testdata.push_status, 'The subscription status is incorrect')
-        self.assertEqual(pushsub.get_output_type(), testdata.push_output_type, 'The subscription output_type is incorrect')
-        self.assertEqual(pushsub.get_hash_type(), testdata.push_hash_historic_type, 'The subscription hash_type is incorrect')
-        self.assertEqual(pushsub.get_hash(), testdata.historic_id, 'The subscription hash is incorrect')
-        self.assertEqual(pushsub.get_output_param('delivery_frequency'), testdata.push_output_params['delivery_frequency'], 'The subscription delivery_frequency is incorrect')
-        self.assertEqual(pushsub.get_output_param('url'), testdata.push_output_params['url'], 'The subscription url is incorrect')
-        self.assertEqual(pushsub.get_output_param('auth.type'), testdata.push_output_params['auth.type'], 'The subscription auth.type is incorrect')
-        self.assertEqual(pushsub.get_output_param('auth.username'), testdata.push_output_params['auth.username'], 'The subscription auth.username is incorrect')
-        self.assertEqual(pushsub.get_output_param('auth.password'), testdata.push_output_params['auth.password'], 'The subscription auth.password is incorrect')
+        self.assertEqual(pushsub.get_id(), data.push_id, 'The subscription ID is incorrect')
+        self.assertEqual(pushsub.get_name(), data.push_name, 'The subscription name is incorrect')
+        self.assertEqual(pushsub.get_created_at(), data.push_created_at, 'The subscription created_at is incorrect')
+        self.assertEqual(pushsub.get_status(), data.push_status, 'The subscription status is incorrect')
+        self.assertEqual(pushsub.get_output_type(), data.push_output_type, 'The subscription output_type is incorrect')
+        self.assertEqual(pushsub.get_hash_type(), data.push_hash_historic_type, 'The subscription hash_type is incorrect')
+        self.assertEqual(pushsub.get_hash(), data.historic_id, 'The subscription hash is incorrect')
+        self.assertEqual(pushsub.get_output_param('delivery_frequency'), data.push_output_params['delivery_frequency'], 'The subscription delivery_frequency is incorrect')
+        self.assertEqual(pushsub.get_output_param('url'), data.push_output_params['url'], 'The subscription url is incorrect')
+        self.assertEqual(pushsub.get_output_param('auth.type'), data.push_output_params['auth.type'], 'The subscription auth.type is incorrect')
+        self.assertEqual(pushsub.get_output_param('auth.username'), data.push_output_params['auth.username'], 'The subscription auth.username is incorrect')
+        self.assertEqual(pushsub.get_output_param('auth.password'), data.push_output_params['auth.password'], 'The subscription auth.password is incorrect')
 
     def test_subscribe_historic_playback_id(self):
         self._populate_pushdef()
@@ -285,20 +282,20 @@ class TestPush(unittest.TestCase):
         response = {
             'response_code': 200,
             'data': {
-                'id': testdata.push_id,
-                'name': testdata.push_name,
-                'created_at': testdata.push_created_at,
-                'status': testdata.push_status,
-                'hash': testdata.push_hash,
-                'hash_type': testdata.push_hash_historic_type,
-                'output_type': testdata.push_output_type,
+                'id': data.push_id,
+                'name': data.push_name,
+                'created_at': data.push_created_at,
+                'status': data.push_status,
+                'hash': data.push_hash,
+                'hash_type': data.push_hash_historic_type,
+                'output_type': data.push_output_type,
                 'output_params': {
-                    'output_params.delivery_frequency': testdata.push_output_params['delivery_frequency'],
-                    'output_params.url': testdata.push_output_params['url'],
+                    'output_params.delivery_frequency': data.push_output_params['delivery_frequency'],
+                    'output_params.url': data.push_output_params['url'],
                     'output_params.auth': {
-                        'type': testdata.push_output_params['auth.type'],
-                        'username': testdata.push_output_params['auth.username'],
-                        'password': testdata.push_output_params['auth.password'],
+                        'type': data.push_output_params['auth.type'],
+                        'username': data.push_output_params['auth.username'],
+                        'password': data.push_output_params['auth.password'],
                     },
                 },
                 'last_request': None,
@@ -309,26 +306,26 @@ class TestPush(unittest.TestCase):
         }
         self.mock_api_client.set_response(response)
 
-        pushsub = self.pushdef.subscribe_stream_hash(testdata.push_hash, testdata.push_name)
+        pushsub = self.pushdef.subscribe_stream_hash(data.push_hash, data.push_name)
 
-        self.assertEqual(pushsub.get_id(), testdata.push_id, 'The subscription ID is incorrect')
-        self.assertEqual(pushsub.get_name(), testdata.push_name, 'The subscription name is incorrect')
-        self.assertEqual(pushsub.get_created_at(), testdata.push_created_at, 'The subscription created_at is incorrect')
-        self.assertEqual(pushsub.get_status(), testdata.push_status, 'The subscription status is incorrect')
-        self.assertEqual(pushsub.get_output_type(), testdata.push_output_type, 'The subscription output_type is incorrect')
-        self.assertEqual(pushsub.get_hash_type(), testdata.push_hash_historic_type, 'The subscription hash_type is incorrect')
-        self.assertEqual(pushsub.get_hash(), testdata.push_hash, 'The subscription hash is incorrect')
-        self.assertEqual(pushsub.get_output_param('delivery_frequency'), testdata.push_output_params['delivery_frequency'], 'The subscription delivery_frequency is incorrect')
-        self.assertEqual(pushsub.get_output_param('url'), testdata.push_output_params['url'], 'The subscription url is incorrect')
-        self.assertEqual(pushsub.get_output_param('auth.type'), testdata.push_output_params['auth.type'], 'The subscription auth.type is incorrect')
-        self.assertEqual(pushsub.get_output_param('auth.username'), testdata.push_output_params['auth.username'], 'The subscription auth.username is incorrect')
-        self.assertEqual(pushsub.get_output_param('auth.password'), testdata.push_output_params['auth.password'], 'The subscription auth.password is incorrect')
+        self.assertEqual(pushsub.get_id(), data.push_id, 'The subscription ID is incorrect')
+        self.assertEqual(pushsub.get_name(), data.push_name, 'The subscription name is incorrect')
+        self.assertEqual(pushsub.get_created_at(), data.push_created_at, 'The subscription created_at is incorrect')
+        self.assertEqual(pushsub.get_status(), data.push_status, 'The subscription status is incorrect')
+        self.assertEqual(pushsub.get_output_type(), data.push_output_type, 'The subscription output_type is incorrect')
+        self.assertEqual(pushsub.get_hash_type(), data.push_hash_historic_type, 'The subscription hash_type is incorrect')
+        self.assertEqual(pushsub.get_hash(), data.push_hash, 'The subscription hash is incorrect')
+        self.assertEqual(pushsub.get_output_param('delivery_frequency'), data.push_output_params['delivery_frequency'], 'The subscription delivery_frequency is incorrect')
+        self.assertEqual(pushsub.get_output_param('url'), data.push_output_params['url'], 'The subscription url is incorrect')
+        self.assertEqual(pushsub.get_output_param('auth.type'), data.push_output_params['auth.type'], 'The subscription auth.type is incorrect')
+        self.assertEqual(pushsub.get_output_param('auth.username'), data.push_output_params['auth.username'], 'The subscription auth.username is incorrect')
+        self.assertEqual(pushsub.get_output_param('auth.password'), data.push_output_params['auth.password'], 'The subscription auth.password is incorrect')
 
     def _populate_pushdef(self, with_invalid_output_params = False):
-        self.pushdef.set_output_type(testdata.push_output_type)
-        for key in testdata.push_output_params:
+        self.pushdef.set_output_type(data.push_output_type)
+        for key in data.push_output_params:
             if not with_invalid_output_params or key != 'delivery_frequency':
-                self.pushdef.set_output_param(key, testdata.push_output_params[key])
+                self.pushdef.set_output_param(key, data.push_output_params[key])
 
 if __name__ == '__main__':
     unittest.main()

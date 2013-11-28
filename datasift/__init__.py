@@ -1,4 +1,4 @@
-# encoding: utf-8
+# -*- coding: utf-8 -*-
 
 """
 The official DataSift API library for Python. This module provides access to
@@ -28,8 +28,9 @@ This software is Open Source. Read the license:
 https://github.com/datasift/datasift-python/blob/master/LICENSE
 """
 
+from __future__ import absolute_import
+
 import sys
-import os
 import json
 from datetime import datetime
 
@@ -66,11 +67,6 @@ __version__ = "0.5.7"
 __date__ = "28 June 2013"
 
 #-----------------------------------------------------------------------------
-# Add this folder to the system path.
-#-----------------------------------------------------------------------------
-sys.path[0:0] = [os.path.dirname(__file__)]
-
-#-----------------------------------------------------------------------------
 # Module constants
 #-----------------------------------------------------------------------------
 USER_AGENT = 'DataSiftPython/%s' % __version__
@@ -81,8 +77,10 @@ API_BASE_URL = 'api.datasift.com/'
 #-----------------------------------------------------------------------------
 try:
     import ssl
+
 except ImportError:
     SSL_AVAILABLE = False
+
 else:
     SSL_AVAILABLE = True
 
@@ -211,13 +209,13 @@ class User(object):
         """
         self._api_client = api_client
 
-    def get_usage(self, period = 'hour'):
+    def get_usage(self, period='hour'):
         """
         Get usage data for this user.
         """
-        return self.call_api('usage', { 'period': period })
+        return self.call_api('usage', {'period': period})
 
-    def create_definition(self, csdl = ''):
+    def create_definition(self, csdl=''):
         """
         Create a definition object for this user. If a CSDL parameter is
         provided then this will be used as the initial CSDL for the
@@ -1424,9 +1422,16 @@ class StreamConsumer(object):
         """
         Factory method for creating protocol-specific StreamConsumer objects.
         """
+        module_name = 'streamconsumer_%s' % consumer_type
+
         try:
-            consumer_module = __import__('streamconsumer_%s' % (consumer_type))
-            return consumer_module.factory(user, definition, event_handler)
+            consumer_module = __import__('datasift',
+                                         globals(),
+                                         locals(),
+                                         module_name)
+            return getattr(consumer_module, module_name).factory(
+                user, definition, event_handler)
+
         except ImportError:
             raise InvalidDataError('Consumer type "%s" is unknown' % consumer_type)
 

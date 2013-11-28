@@ -1,10 +1,12 @@
 #!/usr/bin/env python
-import unittest
 
-# Import the tests
-from .test_user import TestUser
-from .test_definition import TestDefinition
-from .test_push import TestPush
+if __name__ == '__main__':
+    import unittest
 
-# Run the tests
-unittest.main()
+    # Import the tests
+    from datasift.tests.test_user import TestUser
+    from datasift.tests.test_definition import TestDefinition
+    from datasift.tests.test_push import TestPush
+
+    # Run the tests
+    unittest.main()

@@ -1,9 +1,6 @@
 import unittest
-import sys
-import os
 import json
-from tests import testdata
-sys.path[0:0] = [os.path.join(os.path.dirname(__file__), ".."),]
+from datasift.tests import data
 import datasift
 from datasift import mockapiclient
 
@@ -13,31 +10,31 @@ class TestUser(unittest.TestCase):
     mock_api_client = None
 
     def setUp(self):
-        self.user = datasift.User(testdata.username, testdata.api_key)
+        self.user = datasift.User(data.username, data.api_key)
         self.mock_api_client = datasift.mockapiclient.MockApiClient()
         self.user.set_api_client(self.mock_api_client)
 
     def test_construction(self):
-        self.assertEqual(self.user.get_username(), testdata.username, 'Username is incorrect')
-        self.assertEqual(self.user.get_api_key(), testdata.api_key, 'API key is incorrect')
+        self.assertEqual(self.user.get_username(), data.username, 'Username is incorrect')
+        self.assertEqual(self.user.get_api_key(), data.api_key, 'API key is incorrect')
 
     def test_create_definition_empty(self):
         definition = self.user.create_definition()
         self.assertEqual(definition.get(), b'', 'Definition is not empty')
 
     def test_create_definition_unicode(self):
-        definition = self.user.create_definition(testdata.unicode_definition)
-        self.assertEqual(definition.get(), testdata.definition, 'Definition is incorrect')
+        definition = self.user.create_definition(data.unicode_definition)
+        self.assertEqual(definition.get(), data.definition, 'Definition is incorrect')
 
     def test_create_definition_nonempty(self):
-        definition = self.user.create_definition(testdata.definition)
-        self.assertEqual(definition.get(), testdata.definition, 'Definition is incorrect')
+        definition = self.user.create_definition(data.definition)
+        self.assertEqual(definition.get(), data.definition, 'Definition is incorrect')
 
     def test_rate_limits(self):
         response = {
             'response_code': 200,
             'data': {
-                'hash':       testdata.definition_hash,
+                'hash':       data.definition_hash,
                 'created_at': '2011-12-13 14:15:16',
                 'dpu':        10,
             },
@@ -46,7 +43,7 @@ class TestUser(unittest.TestCase):
         }
         self.mock_api_client.set_response(response)
 
-        definition = self.user.create_definition(testdata.definition)
+        definition = self.user.create_definition(data.definition)
 
         try:
             definition.compile()

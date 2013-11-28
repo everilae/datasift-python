@@ -28,13 +28,13 @@ class TestHttpStreamErrors(unittest.TestCase):
 
     def _make_stream(self, broken_method=None, is_running=True,
                      auto_reconnect=True):
-        from tests import testdata
+        from datasift.tests import data
         user = datasift.User('fake', 'user')
         client = datasift.mockapiclient.MockApiClient()
         response = {
             'response_code': 200,
             'data': {
-                'hash': testdata.definition_hash,
+                'hash': data.definition_hash,
                 'created_at': '2011-12-13 14:15:16',
                 'dpu': 10,
             },
@@ -67,7 +67,7 @@ class TestHttpStreamErrors(unittest.TestCase):
         response.getcode.return_value = 200
         response.info.return_value = {}
         mock_read_chunk_patcher = mock.patch(
-            "tests.test_http_stream.StreamConsumer_HTTP_Thread._read_chunk")
+            "datasift.tests.test_http_stream.StreamConsumer_HTTP_Thread._read_chunk")
         self.mock_read_chunk = mock_read_chunk_patcher.start()
         self.addCleanup(mock_read_chunk_patcher.stop)
         return response

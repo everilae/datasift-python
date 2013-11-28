@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from setuptools import setup
+from setuptools import setup, find_packages
 from datasift import __version__
 
 
@@ -22,9 +22,9 @@ setup(
     description="The official DataSift API library for Python.",
     license="Copyright (C) 2012 by MediaSift Ltd. All Rights Reserved. See LICENSE for the full license.",
     url="https://github.com/datasift/datasift-python",
-    packages=['datasift', 'tests'],
-    tests_require=tests_require,
+    packages=find_packages(),
     test_suite='datasift',
+    tests_require=tests_require,
     include_package_data=True,
     platforms='any',
     classifiers=[
