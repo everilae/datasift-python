@@ -24,6 +24,7 @@ setup(
     url="https://github.com/datasift/datasift-python",
     packages=['datasift', 'tests'],
     tests_require=tests_require,
+    test_suite='datasift',
     include_package_data=True,
     platforms='any',
     classifiers=[

@@ -1,6 +1,7 @@
-import unittest, sys, os, json
-from datetime import datetime
-from tests import testdata
+import unittest
+import sys
+import os
+from datasift.tests import testdata
 sys.path[0:0] = [os.path.join(os.path.dirname(__file__), ".."),]
 import datasift
 
