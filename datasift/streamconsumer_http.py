@@ -1,26 +1,28 @@
 # encoding: utf-8
 from threading import Thread
 from time import sleep
-import socket, select, re, platform
-from urllib.parse import urlparse
+import socket
+import select
+import platform
 from datasift import *
 
-"""
-Try to import ssl for SSLError, fake it if not available
-"""
+# Try to import ssl for SSLError, fake it if not available
 try:
     import ssl
+
 except ImportError:
     class ssl(object):
         SSLError = None
 
-receiving_timeout = 5 # in seconds
+receiving_timeout = 5  # in seconds
+
 
 def factory(user, definition, event_handler):
     """
     Factory function for creating an instance of this class.
     """
     return StreamConsumer_HTTP(user, definition, event_handler)
+
 
 class LinearBackoffError(Exception):
     """
@@ -110,13 +112,15 @@ class StreamConsumer_HTTP_Thread(Thread):
                     'Auth': '%s' % self._consumer._get_auth_header(),
                     'User-Agent': self._consumer._get_user_agent(),
                 }
-                req = urllib.request.Request(self._consumer._get_url(), None, headers)
+                req = urllib_request.Request(self._consumer._get_url(), None, headers)
 
                 try:
-                    resp = urllib.request.urlopen(req, None, 30)
-                except urllib.error.HTTPError as resp:
-                    pass
-                except urllib.error.URLError as err:
+                    resp = urllib_request.urlopen(req, None, 30)
+
+                except HTTPError as err:
+                    resp = err
+
+                except URLError as err:
                     self._consumer._on_error('Connection failed: %s' % err)
                     break
 

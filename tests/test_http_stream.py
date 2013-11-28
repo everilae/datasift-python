@@ -7,9 +7,10 @@ from datasift.streamconsumer_http import (
 try:
     import urllib.request
     urlopen_name = 'urllib.request.urlopen'
-    Request_name = 'urllib.request.Request'
+    request_name = 'urllib.request.Request'
 
 except ImportError:
+    import urllib2
     urlopen_name = 'urllib2.urlopen'
     request_name = 'urllib2.Request'
 
@@ -20,8 +21,7 @@ except ImportError:
     import mock
 
 
-"""CURRENTLY BROKEN SINCE WE SWITCHED TO USING RAW SOCKETS"""
-
+# CURRENTLY BROKEN SINCE WE SWITCHED TO USING RAW SOCKETS
 class TestHttpStreamErrors(unittest.TestCase):
     """ Tests to ensure that the HTTP streamer implementation does not
     swallow errors raised by user-supplied event handler classes."""

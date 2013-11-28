@@ -30,15 +30,30 @@ https://github.com/datasift/datasift-python/blob/master/LICENSE
 
 import sys
 import os
-import urllib.request
-import urllib.parse
-import urllib.error
 import json
-import _thread
-import threading
-import types
 import builtins
 from datetime import datetime
+
+# Testing uses mock.patch on urllib.request/urllib2 members
+try:
+    import urllib.request
+    urllib_request = urllib.request
+
+except ImportError:
+    import urllib2
+    urllib_request = urllib2
+
+try:
+    from urllib.error import HTTPError, URLError
+
+except ImportError:
+    from urllib2 import HTTPError, URLError
+
+try:
+    from urllib.parse import urlencode
+
+except ImportError:
+    from urllib import urlencode
 
 __author__ = "Stuart Dallas <stuart@3ft9.com>"
 __status__ = "beta"
@@ -1338,13 +1353,15 @@ class ApiClient(object):
             'Auth': '%s:%s' % (username, api_key),
             'User-Agent': user_agent,
         }
-        req = urllib.request.Request(url, urllib.parse.urlencode(params), headers)
+        req = urllib_request.Request(url, urlencode(params), headers)
 
         try:
-            resp = urllib.request.urlopen(req, None, 10)
-        except urllib.error.HTTPError as resp:
-            pass
-        except urllib.error.URLError as err:
+            resp = urllib_request.urlopen(req, None, 10)
+
+        except HTTPError as err:
+            resp = err
+
+        except URLError as err:
             raise APIError('Request failed: %s' % err, 503)
 
         # Handle a response with no data
