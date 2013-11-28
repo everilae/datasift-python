@@ -5,3 +5,7 @@
 *~
 dist/
 sftp-config.json
+__pycache__
+nosetests.xml
+coverage.xml
+.coverage
