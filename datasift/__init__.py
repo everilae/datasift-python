@@ -31,8 +31,13 @@ https://github.com/datasift/datasift-python/blob/master/LICENSE
 import sys
 import os
 import json
-import builtins
 from datetime import datetime
+
+try:
+    import builtins
+
+except ImportError:
+    builtins = __builtins__
 
 # Testing uses mock.patch on urllib.request/urllib2 members
 try:
