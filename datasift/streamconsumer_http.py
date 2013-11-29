@@ -109,10 +109,8 @@ class StreamConsumer_HTTP_Thread(Thread):
                 sleep(connection_delay)
 
             try:
-                headers = {
-                    'Auth': '%s' % self._consumer._get_auth_header(),
-                    'User-Agent': self._consumer._get_user_agent(),
-                }
+                headers = {'Auth': '%s' % self._consumer._get_auth_header(),
+                           'User-Agent': self._consumer._get_user_agent()}
                 req = urllib_request.Request(self._consumer._get_url(), None, headers)
 
                 try:
@@ -129,6 +127,7 @@ class StreamConsumer_HTTP_Thread(Thread):
                 resp_info = resp.info()
                 if 'Transfer-Encoding' in resp_info and resp_info['Transfer-Encoding'].find('chunked') != -1:
                     self._chunked = True
+
                 self._consumer._on_header(resp_info)
 
                 # Get the HTTP response code
@@ -148,11 +147,14 @@ class StreamConsumer_HTTP_Thread(Thread):
                     ver, meh, meh = platform.python_version_tuple()
                     if int(ver) == 2:
                         self._sock = resp.fp._sock.fp._sock
+
                     else:
                         self._sock = resp.fp.raw
                         # The recv method was renamed read in v3, we use recv
                         self._sock.recv = self._sock.read
+
                     self._sock.settimeout(receiving_timeout)
+
                 except AttributeError:
                     pass
 
@@ -164,6 +166,7 @@ class StreamConsumer_HTTP_Thread(Thread):
                     self._consumer._on_connect()
                     # Start reading and processing the stream
                     self._read_stream()
+
                 elif resp_code >= 400 and resp_code < 500 and resp_code != 420:
                     # Problem with the request, read the error response and
                     # tell the user about it
@@ -171,41 +174,63 @@ class StreamConsumer_HTTP_Thread(Thread):
                     if self._sock is not None:
                         while json_data and len(json_data) <= 4:
                             json_data = self._read_chunk()
+
                         try:
                             data = json.loads(json_data)
+
                         except:
                             self._consumer._on_error('Connection failed: %d [no error message]' % (resp_code))
+
                         else:
                             if data and 'message' in data:
                                 self._consumer._on_error(data['message'])
+
                             else:
                                 self._consumer._on_error('Hash not found')
+
                     # Do not atttempt to reconnect
                     else:
                         self._consumer._on_error('Connection failed: %d [no error message]' % (resp_code))
+
                     break
+
                 else:
                     raise ExponentialBackoffError('Received %s response' % resp_code)
+
             except ExponentialBackoffError as e:
                 if connection_delay == 0:
                     connection_delay = 10
+
                 elif connection_delay < 320:
                     connection_delay *= 2
+
                 else:
                     self._consumer._on_error('%s, no more retries' % str(e))
                     break
+
                 self._consumer._on_warning('%s, retrying in %s seconds' % (str(e), connection_delay))
+
             except LinearBackoffError as e:
                 if connection_delay < 16:
                     connection_delay += 1
                     self._consumer._on_warning('Connection failed (%s), retrying in %s seconds' % (str(e), connection_delay))
+
                 else:
                     self._consumer._on_error('Connection failed (%s), no more retries' % (str(e)))
                     break
+
             except ImmediateReconnect as e:
                 connection_delay = 0
                 self._consumer._on_warning('No data received for over a minute, reconnecting immediately')
+
         self._consumer._on_disconnect()
+
+        # Don't leave the socket open - it leaves the stream running
+        if self._sock is not None:
+            self._sock.close()
+            self._buffer = ''
+            self._sock = None
+
 
     def _raw_read(self, bytes = 16384):
         """
@@ -215,20 +240,25 @@ class StreamConsumer_HTTP_Thread(Thread):
         ready_to_read, ready_to_write, in_error = select.select([self._sock], [], [self._sock], 1)
         if len(in_error) > 0:
             raise socket.error('Something went wrong with the socket')
+
         if len(ready_to_read) > 0:
             try:
                 data = self._sock.recv(bytes)
                 if len(data) > 0:
                     # Strip carriage returns to make splitting lines easier
                     self._buffer += data.replace('\r', '')
+
             except (socket.error, ssl.SSLError) as e:
                 raise LinearBackoffError(str(e))
+
             except socket.timeout:
                 # socket timeout
                 timeout = receiving_timeout
+
         else:
             # one second for select timeout
             timeout = 1
+
         return timeout
 
     def _raw_read_chunk(self, length = 0):
@@ -242,12 +272,14 @@ class StreamConsumer_HTTP_Thread(Thread):
             timewaited += timeout
             if timeout == 0:
                 timewaited = 0
+
             # 65 seconds without receving a tick,  something is wrong we need to reconnect
             if timewaited >= 65.0:
                 raise ImmediateReconnect('timeout')
 
         if length == 0:
             pos = self._buffer.find('\n')
+
         else:
             pos = length
 
@@ -259,8 +291,10 @@ class StreamConsumer_HTTP_Thread(Thread):
         length = ''
         while len(length) == 0:
             length = self._raw_read_chunk()
+
         if not self._chunked:
             return length
+
         length = int(length, 16)
         line = self._raw_read_chunk(length)
         return line
