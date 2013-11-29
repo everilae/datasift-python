@@ -1,10 +1,11 @@
 # encoding: utf-8
 from threading import Thread
 from time import sleep
+import json
 import socket
 import select
 import platform
-from datasift import *
+from datasift import StreamConsumer, urllib_request, HTTPError, URLError
 
 # Try to import ssl for SSLError, fake it if not available
 try:

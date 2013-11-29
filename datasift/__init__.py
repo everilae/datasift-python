@@ -1422,18 +1422,16 @@ class StreamConsumer(object):
         """
         Factory method for creating protocol-specific StreamConsumer objects.
         """
-        module_name = 'streamconsumer_%s' % consumer_type
+        module_name = 'datasift.streamconsumer_%s' % consumer_type
 
         try:
-            consumer_module = __import__('datasift',
-                                         globals(),
-                                         locals(),
-                                         module_name)
-            return getattr(consumer_module, module_name).factory(
-                user, definition, event_handler)
+            __import__(module_name)
 
         except ImportError:
             raise InvalidDataError('Consumer type "%s" is unknown' % consumer_type)
+
+        return sys.modules[module_name].factory(
+            user, definition, event_handler)
 
     """
     Consumer type definitions.
