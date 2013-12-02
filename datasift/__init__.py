@@ -185,9 +185,7 @@ class User(object):
         """
         Returns true if stream connections should be using SSL.
         """
-        if SSL_AVAILABLE:
-            return self._use_ssl
-        return False
+        return SSL_AVAILABLE and self._use_ssl
 
     def enable_ssl(self, use_ssl):
         """
