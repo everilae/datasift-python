@@ -125,7 +125,7 @@ class StreamConsumer_HTTP_Thread(Thread):
 
                 # Determine whether the data will be chunked
                 resp_info = resp.info()
-                if 'Transfer-Encoding' in resp_info and resp_info['Transfer-Encoding'].find('chunked') != -1:
+                if 'Transfer-Encoding' in resp_info and 'chunked' in resp_info['Transfer-Encoding']:
                     self._chunked = True
 
                 self._consumer._on_header(resp_info)
@@ -267,7 +267,7 @@ class StreamConsumer_HTTP_Thread(Thread):
         read until the buffer contains at least length bytes.
         """
         timewaited = 0
-        while (length == 0 and self._buffer.find('\n') == -1) or (length > 0 and len(self._buffer) < length):
+        while (length == 0 and '\n' in self._buffer) or (length > 0 and len(self._buffer) < length):
             timeout = self._raw_read()
             timewaited += timeout
             if timeout == 0:
