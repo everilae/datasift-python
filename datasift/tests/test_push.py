@@ -1,6 +1,11 @@
 import unittest
 from datasift.tests import data
 import datasift
+import datasift.user
+import datasift.push
+import datasift.definition
+import datasift.exc
+import datasift.mockapiclient
 
 class TestPush(unittest.TestCase):
 
@@ -8,10 +13,10 @@ class TestPush(unittest.TestCase):
     mock_api_client = None
 
     def setUp(self):
-        self.user = datasift.User(data.username, data.api_key)
+        self.user = datasift.user.User(data.username, data.api_key)
         self.mock_api_client = datasift.mockapiclient.MockApiClient()
         self.user.set_api_client(self.mock_api_client)
-        self.pushdef = datasift.PushDefinition(self.user)
+        self.pushdef = datasift.push.PushDefinition(self.user)
 
     def test_construction(self):
         self.assertEqual(self.pushdef.get_initial_status(), '', 'Default initial status is not empty')
@@ -22,7 +27,7 @@ class TestPush(unittest.TestCase):
     def test_initial_status(self):
         self.assertEqual(self.pushdef.get_initial_status(), '', 'Default initial status is not empty')
         self.pushdef.set_initial_status(data.push_status)
-        self.assertEqual(self.pushdef.get_initial_status(), datasift.PushSubscription.STATUS_ACTIVE, 'Initial status not set to the new value')
+        self.assertEqual(self.pushdef.get_initial_status(), datasift.push.PushSubscription.STATUS_ACTIVE, 'Initial status not set to the new value')
 
     def test_output_type(self):
         self.assertEqual(self.pushdef.get_output_type(), '', 'Default initial status is not empty')
@@ -49,9 +54,11 @@ class TestPush(unittest.TestCase):
 
         try:
             self.pushdef.validate()
-        except datasift.InvalidDataError as e:
+
+        except datasift.exc.InvalidDataError as e:
             self.fail('InvalidDataError: %s' % e)
-        except datasift.APIError as e:
+
+        except datasift.exc.APIError as e:
             self.fail('APIError: %s' % e)
 
     def test_validate_failed(self):
@@ -69,9 +76,11 @@ class TestPush(unittest.TestCase):
 
         try:
             self.pushdef.validate()
-        except datasift.InvalidDataError as e:
+
+        except datasift.exc.InvalidDataError as e:
             self.fail('InvalidDataError: %s' % e)
-        except datasift.APIError as xxx_todo_changeme:
+
+        except datasift.exc.APIError as xxx_todo_changeme:
             (e, c) = xxx_todo_changeme.args
             if c == 400:
                 self.assertEqual(e, response['data']['error'], 'The failure error is incorrect')
@@ -79,7 +88,7 @@ class TestPush(unittest.TestCase):
                 self.fail('APIError: [%d] %s' % (c, e))
 
     def test_subscribe_definition(self):
-        definition = datasift.Definition(self.user, data.definition)
+        definition = datasift.definition.Definition(self.user, data.definition)
         response = {
             'response_code': 200,
             'data': {
@@ -183,7 +192,7 @@ class TestPush(unittest.TestCase):
         self.assertEqual(pushsub.get_output_param('auth.password'), data.push_output_params['auth.password'], 'The subscription auth.password is incorrect')
 
     def test_subscribe_historic(self):
-        definition = datasift.Definition(self.user, data.definition)
+        definition = datasift.definition.Definition(self.user, data.definition)
         response = {
             'response_code': 200,
             'data': {

@@ -1,5 +1,9 @@
 import datasift
 import unittest
+import datasift.user
+import datasift.definition
+import datasift.streamconsumer
+import datasift.mockapiclient
 from datasift.streamconsumer_http import (
     StreamConsumer_HTTP,
     StreamConsumer_HTTP_Thread)
@@ -26,10 +30,11 @@ class TestHttpStreamErrors(unittest.TestCase):
     """ Tests to ensure that the HTTP streamer implementation does not
     swallow errors raised by user-supplied event handler classes."""
 
-    def _make_stream(self, broken_method=None, is_running=True,
+    @staticmethod
+    def _make_stream(broken_method=None, is_running=True,
                      auto_reconnect=True):
         from datasift.tests import data
-        user = datasift.User('fake', 'user')
+        user = datasift.user.User('fake', 'user')
         client = datasift.mockapiclient.MockApiClient()
         response = {
             'response_code': 200,
@@ -43,7 +48,7 @@ class TestHttpStreamErrors(unittest.TestCase):
         }
         client.set_response(response)
         user.set_api_client(client)
-        definition = datasift.Definition(user, 'some cdsl')
+        definition = datasift.definition.Definition(user, 'some cdsl')
         handler = BrokenHandler(broken_method)
         consumer = StreamConsumer_HTTP(user, definition, handler)
         if is_running:
@@ -55,8 +60,10 @@ class TestHttpStreamErrors(unittest.TestCase):
         # Prefer self.assertRaises in future Python versions
         try:
             sc.run()
+
         except UserException:
             pass
+
         else:
             self.fail('UserException not raised')
 
@@ -82,7 +89,7 @@ class TestHttpStreamErrors(unittest.TestCase):
     @mock.patch(urlopen_name)
     @mock.patch(request_name)
     def test_interaction_exception(self, request, urlopen):
-        response = self._setup_mocks(request, urlopen)
+        self._setup_mocks(request, urlopen)
         sc = self._make_stream('on_interaction', True)
         self.mock_read_chunk.return_value = '{"interaction": "json"}'
         self._check(sc)
@@ -90,7 +97,7 @@ class TestHttpStreamErrors(unittest.TestCase):
     @mock.patch(urlopen_name)
     @mock.patch(request_name)
     def test_deleted_exception(self, request, urlopen):
-        response = self._setup_mocks(request, urlopen)
+        self._setup_mocks(request, urlopen)
         sc = self._make_stream('on_deleted', True)
         self.mock_read_chunk.return_value = '{"interaction": "x", "deleted": "1"}'
         self._check(sc)
@@ -103,7 +110,7 @@ class TestHttpStreamErrors(unittest.TestCase):
         response.readline.return_value = (
             '{"status": "warning", "message":'' "foo"}'
         )
-        self.mock_read_chunk.return_value = ('{"status": "warning", "message":'' "foo"}')
+        self.mock_read_chunk.return_value = '{"status": "warning", "message":'' "foo"}'
         self._check(sc)
 
     @mock.patch(urlopen_name)
@@ -129,7 +136,7 @@ class UserException(Exception):
     pass
 
 
-class BrokenHandler(datasift.StreamConsumerEventHandler):
+class BrokenHandler(datasift.streamconsumer.StreamConsumerEventHandler):
 
     def __init__(self, broken_method=None):
         self.broken_method = broken_method
@@ -138,11 +145,11 @@ class BrokenHandler(datasift.StreamConsumerEventHandler):
         if self.broken_method == 'on_connect':
             raise UserException()
 
-    def on_interaction(self, consumer, interaction, hash):
+    def on_interaction(self, consumer, interaction, hash_):
         if self.broken_method == 'on_interaction':
             raise UserException()
 
-    def on_deleted(self, consumer, interaction, hash):
+    def on_deleted(self, consumer, interaction, hash_):
         if self.broken_method == 'on_deleted':
             raise UserException()
 
@@ -165,7 +172,7 @@ class UserCreateStreamTestCase(unittest.TestCase):
     """
 
     def test_user_create_stream(self):
-        user = datasift.User("ignored", "ignored")
+        user = datasift.user.User("ignored", "ignored")
         consumer = user.get_multi_consumer(["somehash", "someotherhash"],
                                            "ignored",
                                            "http")

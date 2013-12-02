@@ -2,7 +2,10 @@ import unittest
 import json
 from datasift.tests import data
 import datasift
+import datasift.user
+import datasift.exc
 from datasift import mockapiclient
+
 
 class TestUser(unittest.TestCase):
 
@@ -10,7 +13,7 @@ class TestUser(unittest.TestCase):
     mock_api_client = None
 
     def setUp(self):
-        self.user = datasift.User(data.username, data.api_key)
+        self.user = datasift.user.User(data.username, data.api_key)
         self.mock_api_client = datasift.mockapiclient.MockApiClient()
         self.user.set_api_client(self.mock_api_client)
 
@@ -47,7 +50,7 @@ class TestUser(unittest.TestCase):
 
         try:
             definition.compile()
-        except datasift.InvalidDataError as e:
+        except datasift.exc.InvalidDataError as e:
             self.fail('InvalidDataError: %s' % (e))
 
         self.assertEqual(self.user.get_rate_limit(), response['rate_limit'], 'Rate limit is incorrect')
@@ -76,9 +79,10 @@ class TestUser(unittest.TestCase):
                 'rate_limit_remaining': 150,
             }
             self.mock_api_client.set_response(response)
-            usage = self.user.get_usage()
+            self.user.get_usage()
             self.fail('Expected APIError was not thrown')
-        except datasift.APIError as xxx_todo_changeme:
+
+        except datasift.exc.APIError as xxx_todo_changeme:
             (e, c) = xxx_todo_changeme.args
             self.assertEqual(response['data']['error'], e.__str__(), '400 exception message is not as expected')
 
@@ -92,9 +96,10 @@ class TestUser(unittest.TestCase):
                 'rate_limit_remaining': 150,
             }
             self.mock_api_client.set_response(response)
-            usage = self.user.get_usage()
+            self.user.get_usage()
             self.fail('Expected AccessDeniedError was not thrown')
-        except datasift.AccessDeniedError as e:
+
+        except datasift.exc.AccessDeniedError as e:
             self.assertEqual(response['data']['error'], e.__str__(), '401 exception message is not as expected')
 
         try:
@@ -107,9 +112,10 @@ class TestUser(unittest.TestCase):
                 'rate_limit_remaining': 150,
             }
             self.mock_api_client.set_response(response)
-            usage = self.user.get_usage()
+            self.user.get_usage()
             self.fail('Expected APIError was not thrown')
-        except datasift.APIError as xxx_todo_changeme1:
+
+        except datasift.exc.APIError as xxx_todo_changeme1:
             (e, c) = xxx_todo_changeme1.args
             self.assertEqual(response['data']['error'], e.__str__(), '404 exception message is not as expected')
 
@@ -123,9 +129,10 @@ class TestUser(unittest.TestCase):
                 'rate_limit_remaining': 150,
             }
             self.mock_api_client.set_response(response)
-            usage = self.user.get_usage()
+            self.user.get_usage()
             self.fail('Expected APIError was not thrown')
-        except datasift.APIError as xxx_todo_changeme2:
+
+        except datasift.exc.APIError as xxx_todo_changeme2:
             (e, c) = xxx_todo_changeme2.args
             self.assertEqual(response['data']['error'], e.__str__(), '500 exception message is not as expected')
 

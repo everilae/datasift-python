@@ -1,11 +1,13 @@
 # -*- coding: utf-8 -*-
+from __future__ import absolute_import
 from threading import Thread
 from time import sleep
 import json
 import socket
 import select
 import platform
-from datasift import StreamConsumer, urllib_request, HTTPError, URLError
+from . import urllib_request, HTTPError, URLError
+from .streamconsumer import StreamConsumer
 
 # Try to import ssl for SSLError, fake it if not available
 try:
@@ -69,18 +71,21 @@ class StreamConsumer_HTTP(StreamConsumer):
         self._thread = StreamConsumer_HTTP_Thread(self)
         self._thread.start()
 
-    def join_thread(self, timeout = None):
+    def join_thread(self, timeout=None):
         if self._thread:
             if not self._thread.is_alive():
                 return False
+
             self._thread.join(timeout)
             return True
+
         return False
 
     def run_forever(self):
         try:
             while self.join_thread(1):
                 pass
+
         except KeyboardInterrupt:
             self.stop()
 
