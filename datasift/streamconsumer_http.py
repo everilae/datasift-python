@@ -178,7 +178,7 @@ class StreamConsumer_HTTP_Thread(Thread):
                         try:
                             data = json.loads(json_data)
 
-                        except:
+                        except Exception:
                             self._consumer._on_error('Connection failed: %d [no error message]' % (resp_code))
 
                         else:
