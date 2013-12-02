@@ -33,6 +33,7 @@ class LinearBackoffError(Exception):
     """
     pass
 
+
 class ExponentialBackoffError(Exception):
     """
     This exception is thrown within the consumer when an error occurs after
@@ -41,6 +42,7 @@ class ExponentialBackoffError(Exception):
     """
     pass
 
+
 class ImmediateReconnect(Exception):
     """
     This exception is thrown within the consumer when no data and no
@@ -48,6 +50,7 @@ class ImmediateReconnect(Exception):
     the reconnection is carried out straight away.
     """
     pass
+
 
 #---------------------------------------------------------------------------
 # The StreamConsumer_HTTP class
@@ -80,6 +83,7 @@ class StreamConsumer_HTTP(StreamConsumer):
                 pass
         except KeyboardInterrupt:
             self.stop()
+
 
 class StreamConsumer_HTTP_Thread(Thread):
     def __init__(self, consumer, auto_reconnect = True):

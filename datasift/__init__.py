@@ -84,6 +84,7 @@ except ImportError:
 else:
     SSL_AVAILABLE = True
 
+
 #-----------------------------------------------------------------------------
 # Module exceptions.
 #-----------------------------------------------------------------------------
@@ -94,11 +95,13 @@ class AccessDeniedError(Exception):
     """
     pass
 
+
 class APIError(Exception):
     """
     Thrown for errors that occur while talking to the DataSift API.
     """
     pass
+
 
 class CompileFailedError(Exception):
     """
@@ -106,11 +109,13 @@ class CompileFailedError(Exception):
     """
     pass
 
+
 class InvalidDataError(Exception):
     """
     Thrown whenever invalid data is detected.
     """
     pass
+
 
 class RateLimitExceededError(Exception):
     """
@@ -118,11 +123,13 @@ class RateLimitExceededError(Exception):
     """
     pass
 
+
 class StreamError(Exception):
     """
     Thrown for errors to do with the streaming API.
     """
     pass
+
 
 #-----------------------------------------------------------------------------
 # Module-level utility functions.
@@ -136,6 +143,7 @@ def _exists(name):
             or name in sys._getframe(1).f_globals  # caller's globals
             or name in vars(builtins))           # built-in
 
+
 #-----------------------------------------------------------------------------
 # The User class - all interactions with the API should start here.
 #-----------------------------------------------------------------------------
@@ -144,23 +152,22 @@ class User(object):
     A User instance represents a DataSift user and provides access to all of
     the API functionality.
     """
-    _username = False
-    _api_key = False
-    _rate_limit = -1
-    _rate_limit_remaining = -1
-    _api_client = None
-    _use_ssl = SSL_AVAILABLE
 
-    def __init__(self, username, api_key, use_ssl = True, stream_base_url = 'stream.datasift.com/'):
+    def __init__(self, username, api_key, use_ssl=True, stream_base_url='stream.datasift.com/'):
         """
         Initialise a User object with the given username and API key.
         """
         self._username = username
         self._api_key = api_key
         self._use_ssl = use_ssl
-        if stream_base_url[-1] != '/':
+
+        if not stream_base_url.endswith('/'):
             stream_base_url += '/'
+
         self._stream_base_url = stream_base_url
+        self._rate_limit = -1
+        self._rate_limit_remaining = -1
+        self._api_client = None
 
     def get_username(self):
         """
@@ -223,11 +230,11 @@ class User(object):
         """
         return Definition(self, csdl)
 
-    def create_historic(self, hash, start, end, sources, sample, name):
+    def create_historic(self, hash_, start, end, sources, sample, name):
         """
         Create a historic query based on this definition.
         """
-        return Historic(self, hash, start, end, sources, sample, name)
+        return Historic(self, hash_, start, end, sources, sample, name)
 
     def get_historic(self, playback_id):
         """
@@ -235,7 +242,7 @@ class User(object):
         """
         return Historic(self, playback_id)
 
-    def list_historics(self, page = 1, per_page = 20):
+    def list_historics(self, page=1, per_page=20):
         """
         Get the Historics queries in your account.
         """
@@ -253,36 +260,43 @@ class User(object):
         """
         return PushSubscription.get(self, subscription_id)
 
-    def get_push_subscription_log(self, subscription_id = False):
+    def get_push_subscription_log(self, subscription_id=False):
         """
         Get the logs for all Push subscriptions or the given subscription.
         """
         if subscription_id is False:
             return PushSubscription.get_logs(self)
+
         else:
             return self.get_push_subscription(subscription_id).get_log()
 
-    def list_push_subscriptions(self, page = 1, per_page = 20, order_by = False, order_dir = False, include_finished = False, hash_type = False, hash = False):
+    def list_push_subscriptions(self, page=1, per_page=20, order_by=False,
+                                order_dir=False, include_finished=False,
+                                hash_type=False, hash_=False):
         """
         Get the Push subscriptions in your account.
         """
-        return PushSubscription.list(self, page, per_page, order_by, order_dir, include_finished, hash_type, hash)
+        return PushSubscription.list(self, page, per_page, order_by, order_dir,
+                                     include_finished, hash_type, hash_)
 
-    def get_consumer(self, hash, event_handler, consumer_type = 'http'):
+    def get_consumer(self, hash_, event_handler, consumer_type='http'):
         """
         Get a StreamConsumer object for the given hash via the given consumer
         type.
         """
-        return StreamConsumer.factory(self, consumer_type, Definition(self, False, hash), event_handler)
+        return StreamConsumer.factory(self, consumer_type,
+                                      Definition(self, False, hash_),
+                                      event_handler)
 
-    def get_multi_consumer(self, hashes, event_handler, consumer_type = 'http'):
+    def get_multi_consumer(self, hashes, event_handler, consumer_type='http'):
         """
         Get a StreamConsumer object for the given set of hashes via the given
         consumer type.
         """
         return StreamConsumer.factory(self, consumer_type, hashes, event_handler)
 
-    def get_useragent(self):
+    @staticmethod
+    def get_useragent():
         """
         Get the useragent to be used for all API requests.
         """
@@ -292,30 +306,38 @@ class User(object):
         """
         Make a call to a DataSift API endpoint.
         """
-        if self._api_client == None:
+        if self._api_client is None:
             self._api_client = ApiClient()
-        res = self._api_client.call(self.get_username(), self.get_api_key(), endpoint, params, self.get_useragent())
+
+        res = self._api_client.call(self.get_username(), self.get_api_key(),
+                                    endpoint, params, self.get_useragent())
 
         self._rate_limit = res['rate_limit']
         self._rate_limit_remaining = res['rate_limit_remaining']
 
-        if res['response_code'] >= 200 and res['response_code'] <= 299:
+        if 200 <= res['response_code'] <= 299:
             retval = res['data']
+
         elif res['response_code'] == 401:
             errmsg = 'Authentication failed'
             if 'data' in res and 'error' in res['data']:
                 errmsg = res['data']['error']
+
             raise AccessDeniedError(errmsg)
+
         else:
             if res['response_code'] == 403:
                 if self._rate_limit_remaining == 0:
                     raise RateLimitExceededError(res['data']['comment'])
+
             errmsg = 'Unknown error (%d)' % res['response_code']
             if 'data' in res and 'error' in res['data']:
                 errmsg = res['data']['error']
+
             raise APIError(errmsg, res['response_code'])
 
         return retval
+
 
 #-----------------------------------------------------------------------------
 # The Definition class.
@@ -324,19 +346,18 @@ class Definition(object):
     """
     A Definition instance represents a stream definition.
     """
-    _user = False
-    _hash = False
-    _created_at = False
-    _total_dpu = False
-    _csdl = ''
-
-    def __init__(self, user, csdl = '', hash = False):
+    def __init__(self, user, csdl='', hash=False):
         """
         Initialise a Definition object, optionally priming it with the given CSDL and/or
         hash.
         """
+        self._created_at = False
+        self._total_dpu = False
+        self._csdl = None
+
         if not isinstance(user, User):
             raise InvalidDataError('Please supply a valid User object when creating a Definition object.')
+
         self._user = user
         self._hash = hash
         self.set(csdl)
@@ -358,7 +379,8 @@ class Definition(object):
 
         else:
             if isinstance(csdl, str):
-                csdl = csdl.encode('utf8')
+                csdl = csdl.encode('utf-8')
+
             elif not isinstance(csdl, bytes):
                 raise InvalidDataError('Definitions must be UTF-8 byte strings.')
 
@@ -398,11 +420,14 @@ class Definition(object):
         """
         if self._csdl is False:
             raise InvalidDataError('Created at date not available')
+
         if self._created_at is False:
             try:
                 self.validate()
-            except InvalidDataError as e:
+
+            except InvalidDataError:
                 pass
+
         return self._created_at
 
     def get_total_dpu(self):
@@ -426,6 +451,7 @@ class Definition(object):
         """
         if len(self._csdl) == 0:
             raise InvalidDataError('Cannot compile an empty definition')
+
         try:
             res = self._user.call_api('compile', { 'csdl': self._csdl })
 
@@ -440,6 +466,7 @@ class Definition(object):
             if not 'dpu' in res:
                 raise CompileFailedError('Compiled successfully but no DPU in the response')
             self._total_dpu = res['dpu']
+
         except APIError as e:
             msg, code = e.args
             self.clear_hash()
@@ -456,22 +483,27 @@ class Definition(object):
         """
         if len(self._csdl) == 0:
             raise InvalidDataError('Cannot validate an empty definition')
+
         try:
-            res = self._user.call_api('validate', { 'csdl': self._csdl })
+            res = self._user.call_api('validate', {'csdl': self._csdl})
 
             if not 'created_at' in res:
                 raise CompileFailedError('Validated successfully but no created_at in the response')
+
             self._created_at = datetime.strptime(res['created_at'], '%Y-%m-%d %H:%M:%S')
 
             if not 'dpu' in res:
                 raise CompileFailedError('Validated successfully but no DPU in the response')
+
             self._total_dpu = res['dpu']
+
         except APIError as e:
             self.clear_hash()
             msg, code = e.args
 
             if code == 400:
                 raise CompileFailedError(msg)
+
             else:
                 raise CompileFailedError('Unexpected APIError code: %d [%s]' % (code, msg))
 
@@ -481,22 +513,26 @@ class Definition(object):
         """
         if len(self._csdl) == 0:
             raise InvalidDataError('Cannot get the DPU breakdown for an empty definition')
-        retval = self._user.call_api('dpu', { 'hash': self.get_hash() })
+
+        retval = self._user.call_api('dpu', {'hash': self.get_hash()})
+
         if not 'dpu' in retval:
             raise APIError('No total DPU value present in the breakdown data', -1)
+
         self._total_dpu = retval['dpu']
         return retval
 
-    def get_buffered(self, count = False, from_id = False):
+    def get_buffered(self, count=False, from_id=False):
         """
         Call the DataSift API to get buffered interactions.
         """
         if len(self._csdl) == 0:
             raise InvalidDataError('Cannot get buffered interactions for an empty definition')
 
-        params = { 'hash': self.get_hash() }
+        params = {'hash': self.get_hash()}
         if count is not False:
             params['count'] = count
+
         if from_id is not False:
             params['interaction_id'] = from_id
 
@@ -504,6 +540,7 @@ class Definition(object):
 
         if not 'stream' in retval:
             raise APIError('No data in the response', -1)
+
         return retval['stream']
 
     def create_historic(self, start, end, sources, sample, name):
@@ -518,8 +555,11 @@ class Definition(object):
         given type.
         """
         if not isinstance(event_handler, StreamConsumerEventHandler):
-            raise InvalidDataError('Please supply an object derived from StreamConsumerEventHandler when requesting a consumer')
+            raise InvalidDataError('Please supply an object derived from '
+                                   'StreamConsumerEventHandler when '
+                                   'requesting a consumer')
         return StreamConsumer.factory(self._user, consumer_type, self, event_handler)
+
 
 #-----------------------------------------------------------------------------
 # The Historic class.
@@ -528,29 +568,16 @@ class Historic:
     """
     A Historic instance represents a historic query.
     """
-    _user = None
-    _playback_id = False
-    _dpus = False
-    _availability = {}
-    _hash = False
-    _start = False
-    _end = False
-    _created_at = False
-    _sample = 100
-    _sources = []
-    _name = ''
-    _status = 'created'
-    _progress = 0
-    _deleted = False
 
     @staticmethod
-    def list(user, page = 1, per_page = 20):
+    def list(user, page=1, per_page=20):
         """
         Get a page of Historics queries in the given user's account, where
         each page contains up to per_page items.
         """
         if page < 1:
             raise InvalidDataError('The specified page number is invalid')
+
         if per_page < 1:
             raise InvalidDataError('The specified per_page value is invalid')
 
@@ -570,7 +597,7 @@ class Historic:
 
         return retval
 
-    def __init__(self, user, hash, start = None, end = None, sources = None, sample = None, name = None):
+    def __init__(self, user, hash, start=None, end=None, sources=None, sample=None, name=None):
         """
         Construct a new Historic query object from the supplied data. If the
         hash is a dict the object will be populated from that. If start is not
@@ -578,17 +605,34 @@ class Historic:
         the playback ID. Otherwise a new Historics query is created using the
         data passed in.
         """
+        self._playback_id = False
+        self._dpus = False
+        self._availability = {}
+        self._hash = False
+        self._start = False
+        self._end = False
+        self._created_at = False
+        self._sample = 100
+        self._sources = []
+        self._name = ''
+        self._status = 'created'
+        self._progress = 0
+        self._deleted = False
+
         if not isinstance(user, User):
             raise InvalidDataError('Please supply a valid User object when creating a Historic object.')
+
         self._user = user
 
         if isinstance(hash, dict):
             # Initialising from a dict
             self._init(hash)
-        elif start == None:
+
+        elif start is None:
             # The hash is the playback ID, get it from the API
             self._playback_id = hash
             self.reload_data()
+
         else:
             # Creating a new Historics query
             if isinstance(hash, Definition):
@@ -596,18 +640,19 @@ class Historic:
 
             if start == 0:
                 raise InvalidDataError('Please supply a valid start timestamp')
+
             if end == 0:
                 raise InvalidDataError('Please supply a valid end timestamp')
 
             if not isinstance(sources, list) or len(sources) == 0:
                 raise InvalidDataError('Please supply a valid array of sources')
 
-            self._hash       = hash
-            self._start      = start
-            self._end        = end
-            self._sources    = sources
-            self._sample     = sample
-            self._name       = name
+            self._hash = hash
+            self._start = start
+            self._end = end
+            self._sources = sources
+            self._sample = sample
+            self._name = name
             self._created_at = datetime.now()
 
     def _init(self, data):
@@ -839,19 +884,20 @@ class Historic:
             raise InvalidDataError('Cannot start a historic query that hasn\'t been prepared')
 
         try:
-            res = self._user.call_api(
-                    'historics/start',
-                    {
-                        'id': self._playback_id
-                    })
+            self._user.call_api(
+                'historics/start',
+                {'id': self._playback_id})
+
         except APIError as e:
             m, c = e.args
             if c == 400:
                 # Missing or invalid parameters
                 raise InvalidDataError(m)
+
             elif c == 404:
                 # Historic query not found
                 raise InvalidDataError(m)
+
             else:
                 raise APIError('Unexpected APIError code: %d [%s]' % (c, m))
 
@@ -866,20 +912,21 @@ class Historic:
             raise InvalidDataError('Cannot stop a historic query that hasn\'t been prepared')
 
         try:
-            res = self._user.call_api(
-                    'historics/stop',
-                    {
-                        'id': self._playback_id
-                    })
+            self._user.call_api(
+                'historics/stop',
+                {'id': self._playback_id})
+
         except APIError as e:
             e, c = e.args
 
             if c == 400:
                 # Missing or invalid parameters
                 raise InvalidDataError(e)
+
             elif c == 404:
                 # Historic query not found
                 raise InvalidDataError(e)
+
             else:
                 raise APIError('Unexpected APIError code: %d [%s]' % (c, e))
 
@@ -894,23 +941,25 @@ class Historic:
             raise InvalidDataError('Cannot delete a historic query that hasn\'t been prepared')
 
         try:
-            res = self._user.call_api(
-                    'historics/delete',
-                    {
-                        'id': self._playback_id
-                    })
+            self._user.call_api(
+                'historics/delete',
+                {'id': self._playback_id})
             self._deleted = True
+
         except APIError as e:
             e, c = e.args
 
             if c == 400:
                 # Missing or invalid parameters
                 raise InvalidDataError(e)
+
             elif c == 404:
                 # Historic query not found
                 raise InvalidDataError(e)
+
             else:
                 raise APIError('Unexpected APIError code: %d [%s]' % (c, e))
+
 
 #-----------------------------------------------------------------------------
 # The PushDefinition class.
@@ -920,15 +969,15 @@ class PushDefinition:
     A PushDefinition instance represents a push endpoint configuration.
     """
     OUTPUT_PARAMS_PREFIX = 'output_params.'
-    _user = False
-    _initial_status = ''
-    _output_type = ''
-    _output_params = {}
 
     def __init__(self, user):
         """
         Initialise a PushDefinition object.
         """
+        self._initial_status = ''
+        self._output_type = ''
+        self._output_params = {}
+
         if not isinstance(user, User):
             raise InvalidDataError('Please supply a valid User object when creating a PushDefinition object.')
         self._user = user
@@ -979,7 +1028,7 @@ class PushDefinition:
         """
         Validate the output type and parameters with the DataSift API.
         """
-        params = { 'output_type': self.get_output_type() }
+        params = {'output_type': self.get_output_type()}
         for key in self._output_params:
             params[key] = self._output_params[key]
 
@@ -991,11 +1040,11 @@ class PushDefinition:
         """
         return self.subscribe_stream_hash(definition.get_hash(), name)
 
-    def subscribe_stream_hash(self, hash, name):
+    def subscribe_stream_hash(self, hash_, name):
         """
         Subscribe this endpoint to a stream hash.
         """
-        return self.subscribe('hash', hash, name)
+        return self.subscribe('hash', hash_, name)
 
     def subscribe_historic(self, historic, name):
         """
@@ -1009,7 +1058,7 @@ class PushDefinition:
         """
         return self.subscribe('playback_id', playback_id, name)
 
-    def subscribe(self, hash_type, hash, name):
+    def subscribe(self, hash_type, hash_, name):
         """
         Subscribe this endpoint to a stream hash or historic playback ID. Note
         that this will activate the subscription if the initial status is set
@@ -1017,15 +1066,17 @@ class PushDefinition:
         """
         params = {
             'name': name,
-            hash_type: hash,
-            'output_type': self.get_output_type()
-        }
+            hash_type: hash_,
+            'output_type': self.get_output_type()}
+
         for key in self._output_params:
             params[key] = self._output_params[key]
+
         if len(self.get_initial_status()) > 0:
             params['initial_status'] = self.get_initial_status()
 
         return PushSubscription(self._user, self._user.call_api('push/create', params))
+
 
 #-----------------------------------------------------------------------------
 # The PushSubscription class.
@@ -1035,33 +1086,23 @@ class PushSubscription(PushDefinition):
     A PushSubscription instance represents the subscription of a push endpoint
     either a stream hash or a historic playback ID.
     """
-    HASH_TYPE_STREAM   = 'stream';
-    HASH_TYPE_HISTORIC = 'historic';
+    HASH_TYPE_STREAM = 'stream'
+    HASH_TYPE_HISTORIC = 'historic'
 
-    STATUS_ACTIVE    = 'active';
-    STATUS_PAUSED    = 'paused';
-    STATUS_STOPPED   = 'stopped';
-    STATUS_FINISHING = 'finishing';
-    STATUS_FINISHED  = 'finished';
-    STATUS_FAILED    = 'finished';
-    STATUS_DELETED   = 'deleted';
+    STATUS_ACTIVE = 'active'
+    STATUS_PAUSED = 'paused'
+    STATUS_STOPPED = 'stopped'
+    STATUS_FINISHING = 'finishing'
+    STATUS_FINISHED = 'finished'
+    STATUS_FAILED = 'finished'
+    STATUS_DELETED = 'deleted'
 
-    ORDERBY_ID           = 'id';
-    ORDERBY_CREATED_AT   = 'created_at';
-    ORDERBY_REQUEST_TIME = 'request_time';
+    ORDERBY_ID = 'id'
+    ORDERBY_CREATED_AT = 'created_at'
+    ORDERBY_REQUEST_TIME = 'request_time'
 
-    ORDERDIR_ASC  = 'asc';
-    ORDERDIR_DESC = 'desc';
-
-    _user         = False
-    _id           = ''
-    _created_at   = ''
-    _name         = ''
-    _status       = ''
-    _hash         = ''
-    _hash_type    = ''
-    _last_request = None
-    _last_success = None
+    ORDERDIR_ASC = 'asc'
+    ORDERDIR_DESC = 'desc'
 
     @staticmethod
     def get(user, id):
@@ -1071,7 +1112,8 @@ class PushSubscription(PushDefinition):
         return PushSubscription(user, user.call_api('push/get', {'id': id}))
 
     @staticmethod
-    def list(user, page=1, per_page=20, order_by=False, order_dir=False, include_finished=False, hash_type=False, hash=False):
+    def list(user, page=1, per_page=20, order_by=False, order_dir=False,
+             include_finished=False, hash_type=False, hash_=False):
         """
         Get a page of push subscriptions in the given user's account, where
         each page contains up to per_page items. Results will be ordered
@@ -1079,10 +1121,13 @@ class PushSubscription(PushDefinition):
         """
         if page < 1:
             raise InvalidDataError('The specified page number is invalid')
+
         if per_page < 1:
             raise InvalidDataError('The specified per_page value is invalid')
+
         if order_by is False:
             order_by = PushSubscription.ORDERBY_CREATED_AT
+
         if order_dir is False:
             order_dir = PushSubscription.ORDERDIR_ASC
 
@@ -1093,8 +1138,8 @@ class PushSubscription(PushDefinition):
             'order_dir': order_dir
         }
 
-        if hash_type is not False and hash is not False:
-            params[hash_type] = hash
+        if hash_type is not False and hash_ is not False:
+            params[hash_type] = hash_
 
         if include_finished == 1:
             params['include_finished'] = 1
@@ -1111,14 +1156,14 @@ class PushSubscription(PushDefinition):
         return retval
 
     @classmethod
-    def list_by_stream_hash(cls, user, hash, page = 1, per_page = 20, order_by = False, order_dir = False):
+    def list_by_stream_hash(cls, user, hash_, page=1, per_page=20, order_by=False, order_dir=False):
         """
         Get a page of push subscriptions in the given user's account
         subscribed to the given stream hash, where each page contains up to
         per_page items. Results will be ordered according to the supplied
         ordering parameters.
         """
-        return cls.list(user, page, per_page, order_by, order_dir, False, 'hash', hash)
+        return cls.list(user, page, per_page, order_by, order_dir, False, 'hash', hash_)
 
     @classmethod
     def list_by_playback_id(cls, user, playback_id, page=1, per_page=20, order_by=False, order_dir=False):
@@ -1131,17 +1176,20 @@ class PushSubscription(PushDefinition):
         return cls.list(user, page, per_page, order_by, order_dir, False, 'playback_id', playback_id)
 
     @staticmethod
-    def get_logs(user, page = 1, per_page = 20, order_by = False, order_dir = False, id = False):
+    def get_logs(user, page=1, per_page=20, order_by=False, order_dir=False, id=False):
         """
         Page through recent push subscription log entries, specifying the sort
         order.
         """
         if page < 1:
             raise InvalidDataError('The specified page number is invalid')
+
         if per_page < 1:
             raise InvalidDataError('The specified per_page value is invalid')
+
         if order_by is False:
             order_by = PushSubscription.ORDERBY_REQUEST_TIME
+
         if order_dir is False:
             order_dir = PushSubscription.ORDERDIR_DESC
 
@@ -1161,6 +1209,18 @@ class PushSubscription(PushDefinition):
         """
         Initialise a new object from data in a dict.
         """
+        self._user = False
+        self._id = ''
+        self._created_at = ''
+        self._name = ''
+        self._status = ''
+        self._hash = ''
+        self._hash_type = ''
+        self._last_request = None
+        self._last_success = None
+        self._output_type = None
+        self._output_params = None
+
         PushDefinition.__init__(self, user)
         self._init(data)
 
@@ -1208,7 +1268,7 @@ class PushSubscription(PushDefinition):
             raise InvalidDataError('No output_params found in subscription data')
         self._output_params = self._parse_output_params(data['output_params'])
 
-    def _parse_output_params(self, params, prefix = ''):
+    def _parse_output_params(self, params, prefix=''):
         """
         Recursive method to parse the output_params as received from the API
         into the flattened, dot-notation used by the client libraries.
@@ -1219,8 +1279,10 @@ class PushSubscription(PushDefinition):
                 res = self._parse_output_params(params[key], '%s%s.' % (prefix, key))
                 for key in res:
                     retval[key] = res[key]
+
             else:
                 retval['%s%s' % (prefix, key)] = params[key]
+
         return retval
 
     def reload(self):
@@ -1233,7 +1295,7 @@ class PushSubscription(PushDefinition):
         """
         Return the subscription ID.
         """
-        return self._id;
+        return self._id
 
     def get_name(self):
         """
@@ -1299,8 +1361,7 @@ class PushSubscription(PushDefinition):
         """
         params = {
             'id': self.get_id(),
-            'name': self.get_name()
-        }
+            'name': self.get_name()}
 
         for key in self.get_output_params():
             params['%s%s' % (self.OUTPUT_PARAMS_PREFIX, key)] = self.get_output_param(key)
@@ -1329,16 +1390,17 @@ class PushSubscription(PushDefinition):
         """
         Delete this subscription.
         """
-        self._user.call_api('push/delete', { 'id': self.get_id() })
+        self._user.call_api('push/delete', {'id': self.get_id()})
         # The delete API call doesn't return the object, so set the status
         # manually
         self._status = self.STATUS_DELETED
 
-    def get_log(self, page = 1, per_page = 20, order_by = False, order_dir = False):
+    def get_log(self, page=1, per_page=20, order_by=False, order_dir=False):
         """
         Get a page of the log for this subscription in the order specified.
         """
         return PushSubscription.get_logs(self._user, page, per_page, order_by, order_dir, self.get_id())
+
 
 #-----------------------------------------------------------------------------
 # The ApiClient class.
@@ -1390,6 +1452,7 @@ class ApiClient(object):
 
         return retval
 
+
 #-----------------------------------------------------------------------------
 # The StreamConsumerEventHandler base class.
 #-----------------------------------------------------------------------------
@@ -1399,20 +1462,28 @@ class StreamConsumerEventHandler(object):
     """
     def on_connect(self, consumer):
         pass
+
     def on_header(self, consumer, header):
         pass
+
     def on_interaction(self, consumer, interaction, hash):
         pass
+
     def on_deleted(self, consumer, interaction, hash):
         pass
+
     def on_warning(self, consumer, msg):
         pass
+
     def on_error(self, consumer, msg):
         pass
+
     def on_status(self, consumer, status, data):
         pass
+
     def on_disconnect(self, consumer):
         pass
+
 
 #-----------------------------------------------------------------------------
 # The StreamConsumer class. This class should never be used directly, but all
@@ -1439,42 +1510,36 @@ class StreamConsumer(object):
         return sys.modules[module_name].factory(
             user, definition, event_handler)
 
-    """
-    Consumer type definitions.
-    """
+    # Consumer type definitions.
     TYPE_HTTP = 'http'
 
-    """
-    Possible states.
-    """
+    # Possible states.
     STATE_STOPPED = 0
     STATE_STARTING = 1
     STATE_RUNNING = 2
     STATE_STOPPING = 3
 
-    """
-    Class variables
-    """
-    _user = None
-    _hashes = []
-    _event_handler = None
-    _state = 0
-    _auto_reconnect = True
-
     def __init__(self, user, definition, event_handler):
         """
         Initialise a StreamConsumer object.
         """
+        self._state = 0
+        self._auto_reconnect = True
+
         if not isinstance(user, User):
             raise InvalidDataError('Please supply a valid User object when creating a StreamConsumer object')
+
         self._user = user
 
         if isinstance(definition, str):
             self._hashes = self._user.create_definition(definition).get_hash()
+
         elif isinstance(definition, Definition):
             self._hashes = definition.get_hash()
+
         elif isinstance(definition, list):
             self._hashes = definition
+
         else:
             raise InvalidDataError('The definition must be a CSDL string, an array of hashes or a Definition object.')
 
@@ -1483,7 +1548,7 @@ class StreamConsumer(object):
 
         self._event_handler = event_handler
 
-    def consume(self, auto_reconnect = True):
+    def consume(self, auto_reconnect=True):
         """
         Start consuming.
         """
@@ -1497,6 +1562,7 @@ class StreamConsumer(object):
         """
         if not self._is_running(True):
             raise InvalidDataError('Consumer state must be RUNNING before it can be stopped')
+
         self._state = self.STATE_STOPPING
 
     def _get_url(self):
@@ -1506,8 +1572,10 @@ class StreamConsumer(object):
         protocol = 'http'
         if self._user.use_ssl():
             protocol = 'https'
+
         if isinstance(self._hashes, list):
             return "%s://%smulti?hashes=%s" % (protocol, self._user._stream_base_url, ','.join(self._hashes))
+
         else:
             return "%s://%s%s" % (protocol, self._user._stream_base_url, self._hashes)
 
@@ -1523,7 +1591,7 @@ class StreamConsumer(object):
         """
         return self._user.get_useragent()
 
-    def _is_running(self, allow_starting = False):
+    def _is_running(self, allow_starting=False):
         """
         Is the consumer running?
         """
@@ -1542,12 +1610,12 @@ class StreamConsumer(object):
         self._state = self.STATE_RUNNING
         self._event_handler.on_connect(self)
 
-    def _on_header(self,header):
+    def _on_header(self, header):
         """
         Called when the stream socket has connected, header is a dictionary
         with the http headers of the stream's reponse.
         """
-        self._event_handler.on_header(self,header)
+        self._event_handler.on_header(self, header)
 
     def _on_data(self, json_data):
         """
@@ -1555,36 +1623,45 @@ class StreamConsumer(object):
         """
         try:
             data = json.loads(json_data)
-        except:
+
+        except Exception:
             if self._is_running():
                 self._on_error('Failed to decode JSON: %s' % json_data)
+
         else:
             if 'status' in data:
                 # Status notification
                 if data['status'] == 'failure' or data['status'] == 'error':
                     self._on_error(data['message'])
                     self.stop()
+
                 elif data['status'] == 'warning':
                     self._on_warning(data['message'])
+
                 else:
                     status = data['status']
                     del data['status']
                     self._on_status(status, data)
+
             elif 'hash' in data:
                 # Muli-stream data
                 if 'deleted' in data['data'] and data['data']['deleted']:
                     self._event_handler.on_deleted(self, data['data'], data['hash'])
+
                 else:
                     self._event_handler.on_interaction(self, data['data'], data['hash'])
+
             elif 'interaction' in data:
                 # Single stream data
                 if 'deleted' in data and data['deleted']:
                     self._event_handler.on_deleted(self, data, self._hashes)
+
                 else:
                     self._event_handler.on_interaction(self, data, self._hashes)
+
             else:
                 # Unknown message
-                self._on_error('Unhandled data received: %s' % (json_data))
+                self._on_error('Unhandled data received: %s' % json_data)
 
     def _on_error(self, message):
         """
