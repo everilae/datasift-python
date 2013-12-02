@@ -1347,7 +1347,7 @@ class ApiClient(object):
     """
     The default class used for accessing the DataSift API.
     """
-    def call(self, username, api_key, endpoint, params = {}, user_agent = USER_AGENT):
+    def call(self, username, api_key, endpoint, params={}, user_agent=USER_AGENT):
         """
         Make a call to a DataSift API endpoint.
         """
@@ -1356,7 +1356,11 @@ class ApiClient(object):
             'Auth': '%s:%s' % (username, api_key),
             'User-Agent': user_agent,
         }
-        req = urllib_request.Request(url, urlencode(params), headers)
+        # http://dev.datasift.com/docs/rest-api/things-every-developer-should-know#Formatting%20Parameters
+        # "Parameters need to be formatted in UTF-8."
+        req = urllib_request.Request(url,
+                                     urlencode(params).encode('utf-8'),
+                                     headers)
 
         try:
             resp = urllib_request.urlopen(req, None, 10)
@@ -1371,16 +1375,18 @@ class ApiClient(object):
         content = resp.read()
         if len(content) == 0:
             data = json.loads('{}')
+
         else:
-            data = json.loads(content)
+            data = json.loads(content.decode('utf-8'))
+
             if not data:
                 raise APIError('Failed to decode the response', resp.getcode())
 
         retval = {
             'response_code': resp.getcode(),
             'data': data,
-            'rate_limit': resp.headers.getheader('x-ratelimit-limit'),
-            'rate_limit_remaining': resp.headers.getheader('x-ratelimit-remaining'),}
+            'rate_limit': resp.headers.get('x-ratelimit-limit'),
+            'rate_limit_remaining': resp.headers.get('x-ratelimit-remaining')}
 
         return retval
 
