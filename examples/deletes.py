@@ -9,8 +9,10 @@
 # for full details.
 
 import sys, os
+from datasift import config
+
 sys.path[0:0] = [os.path.join(os.path.dirname(__file__), ".."),]
-import config, datasift
+import datasift
 
 # Reopen stdout without line buffering
 sys.stdout = os.fdopen(sys.stdout.fileno(), 'w', 0)

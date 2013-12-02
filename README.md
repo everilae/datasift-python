@@ -25,9 +25,9 @@ This example looks for anything that contains the word "datasift" and simply
 prints the content to the screen as they come in.
 
 ```python
-import sys, os, config, datasift, datasift.user, datasift.sreamconsumer
+from datasift import config, user, streamconsumer
 
-class EventHandler(datasift.streamconsumer.StreamConsumerEventHandler):
+class EventHandler(streamconsumer.StreamConsumerEventHandler):
   def on_interaction(self, consumer, data, hash):
     print data['interaction']['content']
   def on_warning(self, consumer, message):
@@ -35,7 +35,7 @@ class EventHandler(datasift.streamconsumer.StreamConsumerEventHandler):
   def on_error(self, consumer, message):
     print 'ERR: %s' % (message)
 
-user = datasift.user.User(config.username, config.api_key)
+user = user.User(config.username, config.api_key)
 definition = user.create_definition('interaction.content contains "datasift"')
 consumer = definition.get_consumer(EventHandler(), 'http')
 consumer.consume()
