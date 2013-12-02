@@ -77,7 +77,7 @@ class StreamConsumer(object):
         """
         Initialise a StreamConsumer object.
         """
-        self._state = 0
+        self._state = self.STATE_STOPPED
         self._auto_reconnect = True
 
         if not isinstance(user, User):
@@ -107,7 +107,7 @@ class StreamConsumer(object):
         Start consuming.
         """
         self._auto_reconnect = auto_reconnect
-        self._state = self.STATE_STARTING
+        self._state = StreamConsumer.STATE_STARTING
         self.on_start()
 
     def stop(self):
@@ -117,7 +117,7 @@ class StreamConsumer(object):
         if not self._is_running(True):
             raise InvalidDataError('Consumer state must be RUNNING before it can be stopped')
 
-        self._state = self.STATE_STOPPING
+        self._state = StreamConsumer.STATE_STOPPING
 
     def _get_url(self):
         """
@@ -149,7 +149,9 @@ class StreamConsumer(object):
         """
         Is the consumer running?
         """
-        return (allow_starting and self._state == self.STATE_STARTING) or self._state == self.STATE_RUNNING
+        return ((allow_starting and
+                 self._state is StreamConsumer.STATE_STARTING) or
+                self._state is StreamConsumer.STATE_RUNNING)
 
     def _get_state(self):
         """
@@ -161,7 +163,15 @@ class StreamConsumer(object):
         """
         Called when the stream socket has connected.
         """
-        self._state = self.STATE_RUNNING
+        # Allow state transition from STARTING only. Turned out that
+        # if a caller is quick in calling 'consume' and 'stop', the
+        # connection will lag a bit and cause state transitions:
+        # STATE_STARTING -> STATE_STOPPING -> STATE_RUNNING
+        # and the thread will run for ever (unless stop is called
+        # again)
+        if self._state is StreamConsumer.STATE_STARTING:
+            self._state = self.STATE_RUNNING
+
         self._event_handler.on_connect(self)
 
     def _on_header(self, header):
