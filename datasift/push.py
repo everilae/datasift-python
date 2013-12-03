@@ -23,6 +23,7 @@ class PushDefinition:
 
         if not isinstance(user, User):
             raise InvalidDataError('Please supply a valid User object when creating a PushDefinition object.')
+
         self._user = user
 
     def get_initial_status(self):
@@ -75,7 +76,7 @@ class PushDefinition:
         for key in self._output_params:
             params[key] = self._output_params[key]
 
-        retval = self._user.call_api('push/validate', params)
+        self._user.call_api('push/validate', params)
 
     def subscribe_definition(self, definition, name):
         """
@@ -155,8 +156,8 @@ class PushSubscription(PushDefinition):
         return PushSubscription(user, user.call_api('push/get', {'id': id}))
 
     @staticmethod
-    def list(user, page=1, per_page=20, order_by=False, order_dir=False,
-             include_finished=False, hash_type=False, hash_=False):
+    def list(user, page=1, per_page=20, order_by=None, order_dir=None,
+             include_finished=None, hash_type=None, hash_=None):
         """
         Get a page of push subscriptions in the given user's account, where
         each page contains up to per_page items. Results will be ordered
@@ -168,10 +169,10 @@ class PushSubscription(PushDefinition):
         if per_page < 1:
             raise InvalidDataError('The specified per_page value is invalid')
 
-        if order_by is False:
+        if order_by is None:
             order_by = PushSubscription.ORDERBY_CREATED_AT
 
-        if order_dir is False:
+        if order_dir is None:
             order_dir = PushSubscription.ORDERDIR_ASC
 
         params = {
@@ -181,7 +182,7 @@ class PushSubscription(PushDefinition):
             'order_dir': order_dir
         }
 
-        if hash_type is not False and hash_ is not False:
+        if hash_type is not None and hash_ is not None:
             params[hash_type] = hash_
 
         if include_finished == 1:
@@ -191,35 +192,42 @@ class PushSubscription(PushDefinition):
 
         retval = {
             'count': res['count'],
-            'subscriptions': []}
+            'subscriptions': []
+        }
 
         for subscription in res['subscriptions']:
-            retval['subscriptions'].append(PushSubscription(user, subscription))
+            retval['subscriptions'].append(
+                PushSubscription(user, subscription))
 
         return retval
 
     @classmethod
-    def list_by_stream_hash(cls, user, hash_, page=1, per_page=20, order_by=False, order_dir=False):
+    def list_by_stream_hash(cls, user, hash_, page=1, per_page=20,
+                            order_by=None, order_dir=None):
         """
         Get a page of push subscriptions in the given user's account
         subscribed to the given stream hash, where each page contains up to
         per_page items. Results will be ordered according to the supplied
         ordering parameters.
         """
-        return cls.list(user, page, per_page, order_by, order_dir, False, 'hash', hash_)
+        return cls.list(user, page, per_page, order_by, order_dir, None,
+                        'hash', hash_)
 
     @classmethod
-    def list_by_playback_id(cls, user, playback_id, page=1, per_page=20, order_by=False, order_dir=False):
+    def list_by_playback_id(cls, user, playback_id, page=1, per_page=20,
+                            order_by=None, order_dir=None):
         """
         Get a page of push subscriptions in the given user's account
         subscribed to the given playback ID, where each page contains up to
         per_page items. Results will be ordered according to the supplied
         ordering parameters.
         """
-        return cls.list(user, page, per_page, order_by, order_dir, False, 'playback_id', playback_id)
+        return cls.list(user, page, per_page, order_by, order_dir, None,
+                        'playback_id', playback_id)
 
     @staticmethod
-    def get_logs(user, page=1, per_page=20, order_by=False, order_dir=False, id=False):
+    def get_logs(user, page=1, per_page=20, order_by=None, order_dir=None,
+                 id=None):
         """
         Page through recent push subscription log entries, specifying the sort
         order.
@@ -230,10 +238,10 @@ class PushSubscription(PushDefinition):
         if per_page < 1:
             raise InvalidDataError('The specified per_page value is invalid')
 
-        if order_by is False:
+        if order_by is None:
             order_by = PushSubscription.ORDERBY_REQUEST_TIME
 
-        if order_dir is False:
+        if order_dir is None:
             order_dir = PushSubscription.ORDERDIR_DESC
 
         params = {
@@ -243,7 +251,7 @@ class PushSubscription(PushDefinition):
             'order_dir': order_dir
         }
 
-        if id is not False:
+        if id is not None:
             params['id'] = id
 
         return user.call_api('push/log', params)
@@ -252,7 +260,6 @@ class PushSubscription(PushDefinition):
         """
         Initialise a new object from data in a dict.
         """
-        self._user = False
         self._id = ''
         self._created_at = ''
         self._name = ''
@@ -261,8 +268,6 @@ class PushSubscription(PushDefinition):
         self._hash_type = ''
         self._last_request = None
         self._last_success = None
-        self._output_type = None
-        self._output_params = None
 
         PushDefinition.__init__(self, user)
         self._init(data)
@@ -332,7 +337,7 @@ class PushSubscription(PushDefinition):
         """
         Re-fetch this subscription from the API.
         """
-        self._init(self._user.call_api('push/get', { 'id': self.get_id() }))
+        self._init(self._user.call_api('push/get', {'id': self.get_id()}))
 
     def get_id(self):
         """
@@ -415,19 +420,19 @@ class PushSubscription(PushDefinition):
         """
         Pause this subscription.
         """
-        self._init(self._user.call_api('push/pause', { 'id': self.get_id() }))
+        self._init(self._user.call_api('push/pause', {'id': self.get_id()}))
 
     def resume(self):
         """
         Resume this subscription.
         """
-        self._init(self._user.call_api('push/resume', { 'id': self.get_id() }))
+        self._init(self._user.call_api('push/resume', {'id': self.get_id()}))
 
     def stop(self):
         """
         Stop this subscription.
         """
-        self._init(self._user.call_api('push/stop', { 'id': self.get_id() }))
+        self._init(self._user.call_api('push/stop', {'id': self.get_id()}))
 
     def delete(self):
         """
@@ -442,4 +447,5 @@ class PushSubscription(PushDefinition):
         """
         Get a page of the log for this subscription in the order specified.
         """
-        return PushSubscription.get_logs(self._user, page, per_page, order_by, order_dir, self.get_id())
+        return PushSubscription.get_logs(self._user, page, per_page, order_by,
+                                         order_dir, self.get_id())
