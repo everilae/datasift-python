@@ -176,7 +176,7 @@ class StreamConsumer_HTTP_Thread(Thread):
                     # Start reading and processing the stream
                     self._read_stream()
 
-                elif resp_code >= 400 and resp_code < 500 and resp_code != 420:
+                elif 400 <= resp_code < 500 and resp_code != 420:
                     # Problem with the request, read the error response and
                     # tell the user about it
                     json_data = 'init'
