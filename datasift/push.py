@@ -149,11 +149,11 @@ class PushSubscription(PushDefinition):
     ORDERDIR_DESC = 'desc'
 
     @staticmethod
-    def get(user, id):
+    def get(user, id_):
         """
         Get a push subscription by ID.
         """
-        return PushSubscription(user, user.call_api('push/get', {'id': id}))
+        return PushSubscription(user, user.call_api('push/get', {'id': id_}))
 
     @staticmethod
     def list(user, page=1, per_page=20, order_by=None, order_dir=None,
@@ -227,7 +227,7 @@ class PushSubscription(PushDefinition):
 
     @staticmethod
     def get_logs(user, page=1, per_page=20, order_by=None, order_dir=None,
-                 id=None):
+                 id_=None):
         """
         Page through recent push subscription log entries, specifying the sort
         order.
@@ -251,8 +251,8 @@ class PushSubscription(PushDefinition):
             'order_dir': order_dir
         }
 
-        if id is not None:
-            params['id'] = id
+        if id_ is not None:
+            params['id'] = id_
 
         return user.call_api('push/log', params)
 
