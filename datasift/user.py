@@ -208,8 +208,8 @@ class User(object):
         return retval
 
 
-from datasift.definition import Definition
-from datasift.historic import Historic
-from datasift.apiclient import ApiClient
-from datasift.streamconsumer import StreamConsumer
-from datasift.push import PushDefinition, PushSubscription
+from .definition import Definition
+from .historic import Historic
+from .apiclient import ApiClient
+from .streamconsumer import StreamConsumer
+from .push import PushDefinition, PushSubscription
