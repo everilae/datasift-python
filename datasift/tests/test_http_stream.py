@@ -30,6 +30,8 @@ class TestHttpStreamErrors(unittest.TestCase):
     """ Tests to ensure that the HTTP streamer implementation does not
     swallow errors raised by user-supplied event handler classes."""
 
+    READ_CHUNK = "datasift.tests.test_http_stream.StreamConsumer_HTTP_Thread._read_chunk"
+
     @staticmethod
     def _make_stream(broken_method=None, is_running=True,
                      auto_reconnect=True):
@@ -73,49 +75,50 @@ class TestHttpStreamErrors(unittest.TestCase):
         urlopen.return_value = response
         response.getcode.return_value = 200
         response.info.return_value = {}
-        mock_read_chunk_patcher = mock.patch(
-            "datasift.tests.test_http_stream.StreamConsumer_HTTP_Thread._read_chunk")
-        self.mock_read_chunk = mock_read_chunk_patcher.start()
-        self.addCleanup(mock_read_chunk_patcher.stop)
         return response
 
+    @mock.patch(READ_CHUNK)
     @mock.patch(urlopen_name)
     @mock.patch(request_name)
-    def test_connect_exception(self, request, urlopen):
+    def test_connect_exception(self, request, urlopen, mock_read_chunk):
         self._setup_mocks(request, urlopen)
         sc = self._make_stream('on_connect', True)
         self._check(sc)
 
+    @mock.patch(READ_CHUNK)
     @mock.patch(urlopen_name)
     @mock.patch(request_name)
-    def test_interaction_exception(self, request, urlopen):
+    def test_interaction_exception(self, request, urlopen, mock_read_chunk):
         self._setup_mocks(request, urlopen)
         sc = self._make_stream('on_interaction', True)
-        self.mock_read_chunk.return_value = '{"interaction": "json"}'
+        mock_read_chunk.return_value = '{"interaction": "json"}'
         self._check(sc)
 
+    @mock.patch(READ_CHUNK)
     @mock.patch(urlopen_name)
     @mock.patch(request_name)
-    def test_deleted_exception(self, request, urlopen):
+    def test_deleted_exception(self, request, urlopen, mock_read_chunk):
         self._setup_mocks(request, urlopen)
         sc = self._make_stream('on_deleted', True)
-        self.mock_read_chunk.return_value = '{"interaction": "x", "deleted": "1"}'
+        mock_read_chunk.return_value = '{"interaction": "x", "deleted": "1"}'
         self._check(sc)
 
+    @mock.patch(READ_CHUNK)
     @mock.patch(urlopen_name)
     @mock.patch(request_name)
-    def test_warning_exception(self, request, urlopen):
+    def test_warning_exception(self, request, urlopen, mock_read_chunk):
         response = self._setup_mocks(request, urlopen)
         sc = self._make_stream('on_warning', True)
         response.readline.return_value = (
             '{"status": "warning", "message":'' "foo"}'
         )
-        self.mock_read_chunk.return_value = '{"status": "warning", "message":'' "foo"}'
+        mock_read_chunk.return_value = '{"status": "warning", "message":'' "foo"}'
         self._check(sc)
 
+    @mock.patch(READ_CHUNK)
     @mock.patch(urlopen_name)
     @mock.patch(request_name)
-    def test_error_exception(self, request, urlopen):
+    def test_error_exception(self, request, urlopen, mock_read_chunk):
         response = self._setup_mocks(request, urlopen)
         sc = self._make_stream('on_error', True)
         response.readline.return_value = (
@@ -123,9 +126,10 @@ class TestHttpStreamErrors(unittest.TestCase):
         )
         self._check(sc)
 
+    @mock.patch(READ_CHUNK)
     @mock.patch(urlopen_name)
     @mock.patch(request_name)
-    def test_disconnect_exception(self, request, urlopen):
+    def test_disconnect_exception(self, request, urlopen, mock_read_chunk):
         self._setup_mocks(request, urlopen)
         sc = self._make_stream('on_disconnect', False)
         self._check(sc)
