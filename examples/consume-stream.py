@@ -9,15 +9,17 @@
 # exceptions, and production code should catch them. See the documentation
 # for full details.
 
-import sys, os
-sys.path[0:0] = [os.path.join(os.path.dirname(__file__), ".."),]
-import config, datasift
+import sys
+import datasift
+import datasift.streamconsumer
+import datasift.user
+from datasift import config
 
 if len(sys.argv) < 2:
     print 'ERR: Please specify at least one stream hash to consume!'
     sys.exit()
 
-class EventHandler(datasift.StreamConsumerEventHandler):
+class EventHandler(datasift.streamconsumer.StreamConsumerEventHandler):
     def on_connect(self, consumer):
         print 'Connected'
         print '--'
@@ -50,7 +52,7 @@ class EventHandler(datasift.StreamConsumerEventHandler):
         print 'Disconnected'
 
 print 'Creating user...'
-user = datasift.User(config.username, config.api_key)
+user = datasift.user.User(config.username, config.api_key)
 
 print 'Getting the consumer...'
 consumer = user.get_multi_consumer(sys.argv[1:], EventHandler(), 'http')

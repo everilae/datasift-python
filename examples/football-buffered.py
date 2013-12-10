@@ -8,20 +8,21 @@
 # exceptions, and production code should catch them. See the documentation
 # for full details.
 
-import sys, os, time
-sys.path[0:0] = [os.path.join(os.path.dirname(__file__), ".."),]
-import config, datasift
+from __future__ import print_function
+import time
+import datasift.user
+from datasift import config
 
-print 'Creating user...'
-user = datasift.User(config.username, config.api_key)
+print('Creating user...')
+user = datasift.user.User(config.username, config.api_key)
 
-print 'Creating definition...'
+print('Creating definition...')
 csdl = 'interaction.content contains "football"'
 definition = user.create_definition(csdl)
-print '  %s' % csdl
+print('  %s' % csdl)
 
-print 'Getting buffered interactions...'
-print '---'
+print('Getting buffered interactions...')
+print('---')
 num = 10
 from_id = False
 while num > 0:
@@ -29,15 +30,15 @@ while num > 0:
     for interaction in interactions:
         if 'deleted' in interaction:
             continue
-        print 'Type: %s' % (interaction['interaction']['type'])
-        print 'Content: %s' % (interaction['interaction']['content'].encode('ascii', 'replace'))
-        print '--'
+        print('Type: %s' % (interaction['interaction']['type']))
+        print('Content: %s' % (interaction['interaction']['content'].encode('ascii', 'replace')))
+        print('--')
         num -= 1
 
     if num > 0:
-        print 'Sleeping (got %d of 10)...' % (10 - num)
+        print('Sleeping (got %d of 10)...' % (10 - num))
         time.sleep(10)
-        print '--'
+        print('--')
 
-print 'Fetched 10 interactions, we\'re done.'
-print
+print('Fetched 10 interactions, we\'re done.')
+print()

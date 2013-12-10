@@ -8,16 +8,17 @@
 # exceptions, and production code should catch them. See the documentation
 # for full details.
 
-import sys, os
+import sys
+import os
 from datasift import config
-
-sys.path[0:0] = [os.path.join(os.path.dirname(__file__), ".."),]
 import datasift
+import datasift.streamconsumer
+import datasift.user
 
 # Reopen stdout without line buffering
 sys.stdout = os.fdopen(sys.stdout.fileno(), 'w', 0)
 
-class EventHandler(datasift.StreamConsumerEventHandler):
+class EventHandler(datasift.streamconsumer.StreamConsumerEventHandler):
     def on_connect(self, consumer):
         print 'Connected'
         print '--'
@@ -41,7 +42,7 @@ class EventHandler(datasift.StreamConsumerEventHandler):
         print 'Disconnected'
 
 print 'Creating user...'
-user = datasift.User(config.username, config.api_key)
+user = datasift.user.User(config.username, config.api_key)
 
 print 'Creating definition...'
 csdl = 'interaction.type == "twitter" and interaction.sample < 1.0'

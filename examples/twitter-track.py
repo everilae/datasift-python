@@ -10,55 +10,57 @@
 # exceptions, and production code should catch them. See the documentation
 # for full details.
 
-import sys, os
-sys.path[0:0] = [os.path.join(os.path.dirname(__file__), ".."),]
-import config, datasift
+from __future__ import print_function
+import sys
+from datasift import config
+import datasift.streamconsumer
+import datasift.user
 
 if len(sys.argv) < 2:
-    print 'ERR: Please specify the words and/or phrases to track!'
+    print('ERR: Please specify the words and/or phrases to track!')
     sys.exit()
 
-class EventHandler(datasift.StreamConsumerEventHandler):
+class EventHandler(datasift.streamconsumer.StreamConsumerEventHandler):
     def on_connect(self, consumer):
-        print 'Connected'
-        print '--'
+        print('Connected')
+        print('--')
 
     def on_interaction(self, consumer, interaction, hash):
         if 'content' in interaction['interaction']:
-            print interaction['interaction']['content'].encode('ascii', 'replace')
+            print(interaction['interaction']['content'].encode('ascii', 'replace'))
         else:
-            print '%s interaction with no content' % interaction['interaction']['type']
-        print '--'
+            print('%s interaction with no content' % interaction['interaction']['type'])
+        print('--')
 
     def on_deleted(self, consumer, interaction, hash):
-        print 'Delete request for interaction %s of type %s.' % (interaction['interaction']['id'], interaction['interaction']['type'])
-        print 'Please delete it from your archive.'
-        print '--'
+        print('Delete request for interaction %s of type %s.' % (interaction['interaction']['id'], interaction['interaction']['type']))
+        print('Please delete it from your archive.')
+        print('--')
 
     def on_warning(self, consumer, message):
-        print 'WARN: %s' % (message)
-        print '--'
+        print('WARN: %s' % (message))
+        print('--')
 
     def on_error(self, consumer, message):
-        print 'ERR: %s' % (message)
-        print '--'
+        print('ERR: %s' % (message))
+        print('--')
 
     def on_disconnect(self, consumer):
-        print 'Disconnected'
+        print('Disconnected')
 
-print 'Creating user...'
-user = datasift.User(config.username, config.api_key)
+print('Creating user...')
+user = datasift.user.User(config.username, config.api_key)
 
-print 'Creating definition...'
+print('Creating definition...')
 csdl = 'interaction.type == "twitter" and (interaction.content contains "%s")' % '" or interaction.content contains "'.join(sys.argv[1:])
 definition = user.create_definition(csdl)
-print '  %s' % csdl
+print('  %s' % csdl)
 
-print 'Getting the consumer...'
+print('Getting the consumer...')
 consumer = definition.get_consumer(EventHandler(), 'http')
 
-print 'Consuming...'
-print '--'
+print('Consuming...')
+print('--')
 consumer.consume()
 
 consumer.run_forever()
