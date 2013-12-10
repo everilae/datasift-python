@@ -2,8 +2,6 @@
 from __future__ import absolute_import
 import json
 import sys
-from .user import User
-from .definition import Definition
 from .exc import InvalidDataError
 
 
@@ -254,3 +252,7 @@ class StreamConsumer(object):
         Called when the stream socket is disconnected.
         """
         self._event_handler.on_disconnect(self)
+
+
+from .user import User
+from .definition import Definition
