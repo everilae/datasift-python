@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from __future__ import absolute_import
 import json
 from . import (
@@ -45,7 +46,7 @@ class ApiClient(object):
         except URLError as err:
             raise APIError('Request failed: %s' % err, 503)
 
-        # Handle a response with no data
+        # Handle a response with no data
         content = resp.read()
         if len(content) == 0:
             data = json.loads('{}')
