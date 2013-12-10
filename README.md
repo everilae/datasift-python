@@ -48,12 +48,12 @@ http://dev.datasift.com/docs/targets/twitter/tweet-output-format
 
 The library will use SSL connections by default. While we recommend using SSL
 you may disable it if required by passing False as the third parameter when
-creating a user, or by calling enable_ssl(False) on the user object.
+creating a user, or by calling enable ssl(False) on the user object.
 
 Requirements
 ------------
 
-* Python 2.4+
+* Python 2.6+
 
 License
 -------
@@ -71,7 +71,7 @@ Changelog
 
 * v.0.5.5 Introduced automatic reconnection after 65 seconds of no data or ticks. Solves 'silent disconnect' issue (2013-03-06)
 
-* v.0.5.4 Removed checks for existance of deprecated 'volume_info' field in historics/prepare response (2013-01-18)
+* v.0.5.4 Removed checks for existance of deprecated 'volume info' field in historics/prepare response (2013-01-18)
 
 * v.0.5.3 Added missing Historic sample size into historic/prepare requests (2012-12-03)
 
