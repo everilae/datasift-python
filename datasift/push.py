@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import
-from .user import User
 from .exc import InvalidDataError
 
 
@@ -449,3 +448,6 @@ class PushSubscription(PushDefinition):
         """
         return PushSubscription.get_logs(self._user, page, per_page, order_by,
                                          order_dir, self.get_id())
+
+
+from .user import User
