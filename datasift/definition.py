@@ -11,17 +11,19 @@ class Definition(object):
     """
     A Definition instance represents a stream definition.
     """
-    def __init__(self, user, csdl='', hash_=False):
+    def __init__(self, user, csdl='', hash_=None):
         """
         Initialise a Definition object, optionally priming it with the given CSDL and/or
         hash.
         """
-        self._created_at = False
-        self._total_dpu = False
+        self._created_at = None
+        self._total_dpu = None
         self._csdl = None
 
         if not isinstance(user, User):
-            raise InvalidDataError('Please supply a valid User object when creating a Definition object.')
+            raise InvalidDataError(
+                'Please supply a valid User object when creating a '
+                'Definition object.')
 
         self._user = user
         self._hash = hash_
@@ -31,18 +33,16 @@ class Definition(object):
         """
         Get the definition's CSDL string.
         """
-        if self._csdl is False:
+        if self._csdl is None:
             raise InvalidDataError('CSDL not available')
+
         return self._csdl
 
     def set(self, csdl):
         """
         Set the definition string.
         """
-        if csdl is False:
-            self._csdl = False
-
-        else:
+        if csdl is not None:
             if isinstance(csdl, str):
                 csdl = csdl.encode('utf-8')
 
@@ -52,18 +52,19 @@ class Definition(object):
             csdl = csdl.strip()
 
             # Reset the hash if the CSDL hash changed
-            if self._csdl != csdl:
+            if self._csdl is not None and self._csdl != csdl:
                 self.clear_hash()
 
-            self._csdl = csdl
+        self._csdl = csdl
 
     def get_hash(self):
         """
         Returns the hash for this definition. If the hash has not yet been
         obtained it compiles the definition first.
         """
-        if self._hash is False:
+        if self._hash is None:
             self.compile()
+
         return self._hash
 
     def clear_hash(self):
@@ -72,21 +73,23 @@ class Definition(object):
         as requiring compilation. Also resets other variables that depend on
         the CSDL.
         """
-        if self._csdl is False:
-            raise InvalidDataError('Cannot clear the hash of a hash-only definition object')
-        self._hash = False
-        self._created_at = False
-        self._total_dpu = False
+        if self._csdl is None:
+            raise InvalidDataError(
+                'Cannot clear the hash of a hash-only definition object')
+
+        self._hash = None
+        self._created_at = None
+        self._total_dpu = None
 
     def get_created_at(self):
         """
         Returns the date when the stream was first created. If the created at
         date has not yet been obtained it validates the definition first.
         """
-        if self._csdl is False:
+        if self._csdl is None:
             raise InvalidDataError('Created at date not available')
 
-        if self._created_at is False:
+        if self._created_at is None:
             try:
                 self.validate()
 
@@ -100,10 +103,10 @@ class Definition(object):
         Returns the total DPU of the stream. If the DPU has not yet been
         obtained it validates the definition first.
         """
-        if self._csdl is False:
+        if self._csdl is None:
             raise InvalidDataError('Total DPU not available')
 
-        if self._total_dpu is False:
+        if self._total_dpu is None:
             try:
                 self.validate()
 
@@ -117,7 +120,7 @@ class Definition(object):
         Call the DataSift API to compile this definition. If compilation
         succeeds we store the details in the response.
         """
-        if len(self._csdl) == 0:
+        if not self._csdl:
             raise InvalidDataError('Cannot compile an empty definition')
 
         try:
@@ -149,7 +152,7 @@ class Definition(object):
         Call the DataSift API to validate this definition. If validation
         succeeds we store the details in the response.
         """
-        if len(self._csdl) == 0:
+        if not self._csdl:
             raise InvalidDataError('Cannot validate an empty definition')
 
         try:
@@ -179,7 +182,7 @@ class Definition(object):
         """
         Call the DataSift API to get the DPU breakdown for this definition.
         """
-        if len(self._csdl) == 0:
+        if not self._csdl:
             raise InvalidDataError('Cannot get the DPU breakdown for an empty definition')
 
         retval = self._user.call_api('dpu', {'hash': self.get_hash()})
@@ -190,18 +193,18 @@ class Definition(object):
         self._total_dpu = retval['dpu']
         return retval
 
-    def get_buffered(self, count=False, from_id=False):
+    def get_buffered(self, count=None, from_id=None):
         """
         Call the DataSift API to get buffered interactions.
         """
-        if len(self._csdl) == 0:
+        if not self._csdl:
             raise InvalidDataError('Cannot get buffered interactions for an empty definition')
 
         params = {'hash': self.get_hash()}
-        if count is not False:
+        if count is not None:
             params['count'] = count
 
-        if from_id is not False:
+        if from_id is not None:
             params['interaction_id'] = from_id
 
         retval = self._user.call_api('stream', params)
