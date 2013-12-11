@@ -25,7 +25,6 @@ setup(
     packages=find_packages(),
     test_suite='datasift',
     tests_require=tests_require,
-    install_requires=tests_require,
     include_package_data=True,
     platforms='any',
     classifiers=[
