@@ -156,7 +156,7 @@ class PushSubscription(PushDefinition):
 
     @staticmethod
     def list(user, page=1, per_page=20, order_by=None, order_dir=None,
-             include_finished=None, hash_type=None, hash_=None):
+             include_finished=False, hash_type=None, hash_=None):
         """
         Get a page of push subscriptions in the given user's account, where
         each page contains up to per_page items. Results will be ordered
