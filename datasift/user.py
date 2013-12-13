@@ -139,9 +139,9 @@ class User(object):
         else:
             return self.get_push_subscription(subscription_id).get_log()
 
-    def list_push_subscriptions(self, page=1, per_page=20, order_by=False,
-                                order_dir=False, include_finished=False,
-                                hash_type=False, hash_=False):
+    def list_push_subscriptions(self, page=1, per_page=20, order_by=None,
+                                order_dir=None, include_finished=False,
+                                hash_type=None, hash_=None):
         """
         Get the Push subscriptions in your account.
         """

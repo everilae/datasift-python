@@ -184,7 +184,7 @@ class PushSubscription(PushDefinition):
         if hash_type is not None and hash_ is not None:
             params[hash_type] = hash_
 
-        if include_finished == 1:
+        if include_finished:
             params['include_finished'] = 1
 
         res = user.call_api('push/get', params)
